@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset='utf-8'>
+    <title>Session <%- sessionNumber %> - <%- name %></title>
+    <link rel='stylesheet' href='../common/style.css' charset='utf-8'>
+  </head>
+  <body>
+    <!-- Source available: github.com/gregtatum/everyday/ -->
+    <div class='title'>
+      <%= previous %>
+      <h1>Session <%- sessionNumber %></h1>
+      <h2><%- name %></h2>
+      <%= next %>
+    </div>
+    <script src='bundle.js'></script>
+  </body>
+</html>

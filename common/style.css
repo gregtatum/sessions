@@ -1,0 +1,24 @@
+body {
+  margin: 0;
+  padding: 0;
+}
+
+.title {
+  position: absolute;
+  bottom: 0.3em;
+  color: #fff;
+  z-index: 1;
+  right: 0.7em;
+  font-family: sans-serif;
+  font-weight: 100;
+  text-align: right;
+  text-transform: uppercase;
+}
+
+.title h1 {
+  margin: 0;
+}
+
+.title h2 {
+  margin: 0;
+}
