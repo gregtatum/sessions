@@ -1,10 +1,9 @@
 const mat4 = require('gl-mat4')
+const TAU = 6.283185307179586
 
-module.exports = function(regl) {
+module.exports = function (regl) {
   const a1 = []
   const a2 = []
-  const a3 = []
-  const a4 = []
 
   return {
     projection: ({viewportWidth, viewportHeight}) => (
@@ -16,6 +15,6 @@ module.exports = function(regl) {
         1000
       )
     ),
-    view: mat4.lookAt(a4, [1, 0.5, 1], [0, 0, 0], [0, 1, 0])
+    view: mat4.lookAt(a2, [1, 0.5, 1], [0, 0, 0], [0, 1, 0])
   }
 }

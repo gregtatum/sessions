@@ -1,7 +1,5 @@
 const glsl = require('glslify')
-const mat4 = require('gl-mat4')
 const createPlane = require('primitive-plane')
-const TAU = Math.PI * 2
 
 module.exports = function (regl) {
   const plane = createPlane(
@@ -20,7 +18,7 @@ module.exports = function (regl) {
     uniforms: {
       time: ({time}) => time,
       width: regl.context('viewportWidth'),
-      height: regl.context('viewportHeight'),
+      height: regl.context('viewportHeight')
     },
     vert: glsl`
       precision mediump float;

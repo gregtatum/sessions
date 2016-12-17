@@ -1,7 +1,7 @@
 const glsl = require('glslify')
 const mat4 = require('gl-mat4')
 const createPlane = require('primitive-plane')
-const TAU = Math.PI * 2
+const TAU = 6.283185307179586
 
 module.exports = function (regl) {
   const plane = createPlane(
@@ -71,7 +71,7 @@ module.exports = function (regl) {
       time: ({time}) => time,
       projection: (context, {projection}) => projection(context),
       view: (context, {view}) => view,
-      model: mat4.rotateX([], mat4.identity([]), TAU * 0.25),
+      model: mat4.rotateX([], mat4.identity([]), TAU * 0.25)
     },
     primitive: 'lines',
     lineWidth: Math.min(2 * window.devicePixelRatio, regl.limits.lineWidthDims[1]),
@@ -88,7 +88,6 @@ module.exports = function (regl) {
         alpha: 'add'
       },
       color: [0, 0, 0, 0]
-    },
-
+    }
   })
 }

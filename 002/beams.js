@@ -8,9 +8,9 @@ const BOX_DEPTH_Z = 5
 const BOX_OFFSET_X = -1.0
 const BOX_OFFSET_Y = 0.1
 const BOX_OFFSET_Z = 0.0
-const BOX_LENGTH = 0.35;
-const BOX_HEIGHT = 0.003;
-const BOX_WIDTH = 0.009;
+const BOX_LENGTH = 0.35
+const BOX_HEIGHT = 0.003
+const BOX_WIDTH = 0.009
 
 module.exports = function (regl) {
   const box = createBox({size: [
@@ -25,7 +25,7 @@ module.exports = function (regl) {
   const drawBox = regl({
     attributes: {
       position: box.positions,
-      normal: box.normals,
+      normal: box.normals
     },
     uniforms: {
       time: ({time}) => time,
@@ -39,7 +39,7 @@ module.exports = function (regl) {
           position[1],
           (position[2] + time) % BOX_DEPTH_Z - BOX_DEPTH_Z / 2
         ])
-      },
+      }
     },
     vert: glsl`
       #pragma glslify: snoise2 = require(glsl-noise/simplex/2d)

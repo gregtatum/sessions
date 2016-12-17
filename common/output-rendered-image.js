@@ -10,7 +10,8 @@ module.exports = function outputRenderedImage (gl, width, height) {
   const pixels = new Uint8Array(pixelCount)
   gl.readPixels(0, 0, width, height, gl.RGBA, gl.UNSIGNED_BYTE, pixels)
 
-  const image = new Jimp(width, height, function (err, image) {
+  /* eslint-disable no-new */
+  new Jimp(width, height, function (err, image) {
     if (err) {
       console.log('Unable to create image', err)
     }
@@ -51,5 +52,5 @@ module.exports = function outputRenderedImage (gl, width, height) {
               .then(() => process.exit())
           })
       })
-  });
+  })
 }

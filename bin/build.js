@@ -59,8 +59,8 @@ function generateThumbnail () {
   require(`../${sessionNumber}`)
 }
 
-function getDirectories(directory) {
-  return fs.readdirSync(directory).filter(function(file) {
+function getDirectories (directory) {
+  return fs.readdirSync(directory).filter(function (file) {
     return fs.statSync(path.join(directory, file)).isDirectory()
   })
 }

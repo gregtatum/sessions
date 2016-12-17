@@ -1,7 +1,7 @@
 const glsl = require('glslify')
 const mat4 = require('gl-mat4')
 const createPlane = require('primitive-plane')
-const TAU = Math.PI * 2
+const TAU = 6.283185307179586
 
 module.exports = function (regl) {
   const plane = createPlane(

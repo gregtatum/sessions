@@ -29,8 +29,8 @@ function generateHTML () {
   console.log('Updated HTML file at: ' + htmlDestination)
 }
 
-function getDirectories(directory) {
-  return fs.readdirSync(directory).filter(function(file) {
+function getDirectories (directory) {
+  return fs.readdirSync(directory).filter(function (file) {
     return fs.statSync(path.join(directory, file)).isDirectory()
   })
 }
