@@ -2,11 +2,14 @@
 const path = require('path')
 const fs = require('fs')
 const template = require('lodash.template')
-const sessionNumber = require('../common/session-number')()
 
-generateHTML()
+const url = 'https://github.com/gregtatum/sessions'
 
-function generateHTML () {
+module.exports = function generateAllHtml (sessionNumbers) {
+  sessionNumbers.forEach(generateHTML)
+}
+
+function generateHTML (sessionNumber) {
   const htmlTemplatePath = path.resolve(__dirname, '../templates/index.html')
   const htmlDestination = path.resolve(__dirname, '../', sessionNumber, 'index.html')
   const packageDestination = path.resolve(__dirname, '../', sessionNumber, 'package.json')
@@ -21,8 +24,8 @@ function generateHTML () {
 
   fs.writeFileSync(htmlDestination, htmlTemplate({
     sessionNumber: sessionNumber,
-    previous: previous ? `<a href='../${previous}'>%lt;</a>` : '',
-    next: next ? `<a href='../${next}'>%lt;</a>` : '',
+    previous: `<a href='${previous ? `../${previous}` : url}'>&lt;</a>`,
+    next: `<a href='${next ? `../${next}` : url}'>&gt;</a>`,
     name: packageJson.name
   }))
 

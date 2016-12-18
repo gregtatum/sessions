@@ -13,6 +13,8 @@ body {
   font-weight: 100;
   text-align: right;
   text-transform: uppercase;
+  display: flex;
+  vertical-align: middle;
 }
 
 .title h1 {
@@ -21,4 +23,13 @@ body {
 
 .title h2 {
   margin: 0;
+}
+
+.title a {
+  color: #fff;
+  text-decoration: none;
+  font-size: 2em;
+  padding: 0 0.3em;
+  font-weight: bold;
+  align-self: center;
 }
