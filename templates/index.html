@@ -2,11 +2,30 @@
 <html>
   <head>
     <meta charset='utf-8'>
-    <title>Session <%- sessionNumber %> - <%- name %></title>
+    <title>Session <%- sessionNumber %> - <%- name %> | Greg Tatum</title>
     <link rel='stylesheet' href='../common/style.css' charset='utf-8'>
+    <meta property="og:image" content="http://sessions.gregtatum.com/<%- sessionNumber %>/image.jpg" />
+    <meta property="og:description" content="<%- name %>" />
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:site" content="@TatumCreative">
+    <meta name="twitter:creator" content="@TatumCreative">
+    <meta name="twitter:image" content="http://sessions.gregtatum.com/<%- sessionNumber %>/image.jpg">
+    <meta name="twitter:title" content="Session <%- sessionNumber %>">
+    <meta name="twitter:description" content="<%- name %>">
+    <script>
+      // Only track on gregtatum.com
+      if( window.location.host.indexOf('gregtatum.com') > -1 ) {
+        (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+        (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+        m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+        })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+        ga('create', 'UA-3859613-1', 'auto');
+        ga('send', 'pageview');
+      }
+    </script>
   </head>
   <body>
-    <!-- Source available: github.com/gregtatum/everyday/ -->
     <div class='title'>
       <%= previous %>
       <div>
@@ -15,6 +34,7 @@
       </div>
       <%= next %>
     </div>
+    <!-- Source available: github.com/gregtatum/sessions/ -->
     <script src='bundle.js'></script>
   </body>
 </html>

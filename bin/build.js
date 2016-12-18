@@ -2,21 +2,29 @@
 const path = require('path')
 const fs = require('fs')
 const template = require('lodash.template')
-const sessionNumber = require('../common/session-number')()
 const generateAllHtml = require('../common/generate-html')
 const browserify = require('browserify')
 const UglifyJS = require('uglify-js')
 global.headlessRegl = require('../common/headless-regl')
+const sessionNumbers = (
+  getDirectories(path.resolve(__dirname, '..')).filter(s => /^\d+$/.exec(s))
+)
 
-browserifyBundle(() => {
-  const sessionNumbers = (
-    getDirectories(path.resolve(__dirname, '..')).filter(s => /^\d+$/.exec(s))
-  )
+let sessionNumber
+try {
+  sessionNumber = require('../common/session-number')()
+} catch (error) {}
 
+if (sessionNumber === undefined) {
   updateReadme(sessionNumbers)
   generateAllHtml(sessionNumbers)
-  generateThumbnail()
-})
+} else {
+  browserifyBundle(() => {
+    updateReadme(sessionNumbers)
+    generateAllHtml(sessionNumbers)
+    generateThumbnail()
+  })
+}
 
 function updateReadme (sessionNumbers) {
   const readmeTemplatePath = path.resolve(__dirname, '../templates/README.md')
@@ -25,7 +33,7 @@ function updateReadme (sessionNumbers) {
 
   fs.writeFileSync(readmeDestination, readmeTemplate({
     thumbs: sessionNumbers.slice().reverse().map(dir => (
-      `[![Session ${dir}](./${dir}/thumb.jpg)](https://gregtatum.github.io/sessions/${dir})`
+      `[![Session ${dir}](./${dir}/thumb.jpg)](http://sessions.gregtatum.com/${dir})`
     )).join('\n')
   }))
 

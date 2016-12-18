@@ -1,6 +1,4 @@
 const glsl = require('glslify')
-const mat4 = require('gl-mat4')
-const TAU = 6.283185307179586
 const random = require('random-spherical/array')()
 
 const POINTS = 10000
@@ -58,7 +56,7 @@ module.exports = function (regl) {
       model: (context, {planetTilt}) => planetTilt,
       normalMatrix: (context, {planetTiltNormal}) => planetTiltNormal(context),
       light1: (context, {light1}) => light1,
-      radius: RADIUS,
+      radius: RADIUS
       // model: mat4.rotateX([], mat4.identity([]), TAU * 0.25)
     },
     primitive: 'points',
@@ -76,6 +74,6 @@ module.exports = function (regl) {
         alpha: 'add'
       },
       color: [0, 0, 0, 0]
-    },
+    }
   })
 }

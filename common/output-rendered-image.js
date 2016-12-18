@@ -38,7 +38,9 @@ module.exports = function outputRenderedImage (gl, width, height) {
         console.log('Writing out thumbnail to: ' + thumbPath)
 
         image
-          .resize(256, 144)
+          // .resize(256, 144)
+          // Fit this nicely into GitHub's README.md display width.
+          .resize(292, 164)
           .write(thumbPath, err => {
             if (err) {
               throw new Error('Unable to save thumbnail', err)

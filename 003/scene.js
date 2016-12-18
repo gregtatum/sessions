@@ -9,13 +9,14 @@ module.exports = function (regl) {
     fov: TAU * 0.1,
     near: 0.01,
     far: 100,
-    position: [0, 0, 1],
+    position: [0, 0, 1]
   })
 
   const controls = createControls({
     phi: TAU * 0.2,
     distanceBounds: [0.5, 2],
     zoomSpeed: 0.000005,
+    pinchSpeed: 0.000005,
     rotateSpeed: 0.003,
     damping: 0.02,
     parent: window,
@@ -38,7 +39,6 @@ module.exports = function (regl) {
   const planetTilt = mat4.rotateZ([], mat4.identity([]), TAU * 0.05)
   const a1 = []
   const a2 = []
-  const a3 = []
 
   return {
     projection: (context) => {
@@ -52,7 +52,7 @@ module.exports = function (regl) {
     planetTilt: planetTilt,
     planetTiltNormal: (context) => {
       update(context)
-      return mat4.transpose(a3, mat4.invert(a2, planetTilt))
+      return mat4.transpose(a2, mat4.invert(a1, planetTilt))
     },
     light1: vec3.normalize([], [-1, 0.5, 0.3])
   }

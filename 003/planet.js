@@ -1,6 +1,4 @@
 const glsl = require('glslify')
-const mat4 = require('gl-mat4')
-const TAU = 6.283185307179586
 const random = require('random-spherical/array')()
 
 const POINTS = 10000
@@ -41,7 +39,7 @@ module.exports = function (regl) {
         vColor = mix(baseColor, fogColor, max(0.0, min(1.0, 0.2 * gl_Position.z)));
         vColor = toGamma(vColor);
         float pointSizeByHeight = mix(0.2, 1.0, (1.0 - length(position.y) / radius));
-        gl_PointSize = pointSizeByHeight * POINT_SIZE * viewportHeight * (2.0 - gl_Position.z);
+        gl_PointSize = max(0.0, pointSizeByHeight * POINT_SIZE * viewportHeight * (2.0 - gl_Position.z));
       }`,
     frag: `
       precision mediump float;
@@ -64,10 +62,10 @@ module.exports = function (regl) {
       model: (context, {planetTilt}) => planetTilt,
       normalMatrix: (context, {planetTiltNormal}) => planetTiltNormal(context),
       light1: (context, {light1}) => light1,
-      radius: RADIUS,
+      radius: RADIUS
       // model: mat4.rotateX([], mat4.identity([]), TAU * 0.25)
     },
     primitive: 'points',
-    lineWidth: Math.min(2 * window.devicePixelRatio, regl.limits.lineWidthDims[1]),
+    lineWidth: Math.min(2 * window.devicePixelRatio, regl.limits.lineWidthDims[1])
   })
 }

@@ -15,6 +15,7 @@ body {
   text-transform: uppercase;
   display: flex;
   vertical-align: middle;
+  text-align: center;
 }
 
 .title h1 {
