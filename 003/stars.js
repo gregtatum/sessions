@@ -51,11 +51,11 @@ module.exports = function (regl) {
       time: ({time}) => time,
       viewportHeight: ({viewportHeight}) => viewportHeight,
       pixelRatio: () => window.devicePixelRatio,
-      projection: (context, {projection}) => projection(context),
-      view: (context, {view}) => view(context),
-      model: (context, {planetTilt}) => planetTilt,
-      normalMatrix: (context, {planetTiltNormal}) => planetTiltNormal(context),
-      light1: (context, {light1}) => light1,
+      projection: ({projection}) => projection,
+      view: ({view}) => view,
+      model: ({planetTilt}) => planetTilt,
+      normalMatrix: ({planetTiltNormal}) => planetTiltNormal,
+      light1: ({light1}) => light1,
       radius: RADIUS
       // model: mat4.rotateX([], mat4.identity([]), TAU * 0.25)
     },

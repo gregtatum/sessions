@@ -26,34 +26,28 @@ module.exports = function (regl) {
   camera.update()
 
   let prevTick
-  function update ({tick, viewportWidth, viewportHeight}) {
-    if (tick !== prevTick) {
-      controls.update()
-      controls.copyInto(camera.position, camera.direction, camera.up)
-      camera.viewport[2] = viewportWidth
-      camera.viewport[3] = viewportHeight
-      camera.update()
-      prevTick = tick
+  function update (callback) {
+    return ({tick, viewportWidth, viewportHeight}) => {
+      if (tick !== prevTick) {
+        controls.update()
+        controls.copyInto(camera.position, camera.direction, camera.up)
+        camera.viewport[2] = viewportWidth
+        camera.viewport[3] = viewportHeight
+        camera.update()
+        prevTick = tick
+      }
+      return callback.apply(null, arguments)
     }
   }
   const planetTilt = mat4.rotateZ([], mat4.identity([]), TAU * 0.05)
-  const a1 = []
-  const a2 = []
 
-  return {
-    projection: (context) => {
-      update(context)
-      return camera.projection
-    },
-    view: (context) => {
-      update(context)
-      return camera.view
-    },
-    planetTilt: planetTilt,
-    planetTiltNormal: (context) => {
-      update(context)
-      return mat4.transpose(a2, mat4.invert(a1, planetTilt))
-    },
-    light1: vec3.normalize([], [-1, 0.5, 0.3])
-  }
+  return regl({
+    context: {
+      projection: update(() => camera.projection),
+      view: update(() => camera.view),
+      planetTilt: planetTilt,
+      planetTiltNormal: mat4.transpose([], mat4.invert([], planetTilt)),
+      light1: vec3.normalize([], [-1, 0.5, 0.3])
+    }
+  })
 }
