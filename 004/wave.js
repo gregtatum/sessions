@@ -87,7 +87,7 @@ module.exports = function (regl) {
         // Quad ease in.
         return Math.pow(i2, 4)
       },
-      effect: ({time}) => Math.floor(time / 15) % 2
+      effect: ({time}) => Math.floor(time / RESET_IN_SECONDS) % 2
     },
     depth: { enable: false },
     count: 3,
