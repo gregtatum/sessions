@@ -20,6 +20,7 @@
     "gl-mat4": "1.1.4",
     "glsl-gamma": "2.0.0",
     "glsl-hsl2rgb": "1.1.0",
+    "glsl-look-at": "1.0.0",
     "glsl-noise": "0.0.0",
     "glsl-y-rotate": "2.0.0",
     "glslify": "6.0.1",
