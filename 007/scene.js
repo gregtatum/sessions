@@ -28,8 +28,8 @@ module.exports = function (regl) {
   function update (callback) {
     return ({tick, viewportWidth, viewportHeight}) => {
       if (tick !== prevTick) {
-        controls.update()
-        controls.copyInto(camera.position, camera.direction, camera.up)
+        // controls.update()
+        // controls.copyInto(camera.position, camera.direction, camera.up)
         camera.viewport[2] = viewportWidth
         camera.viewport[3] = viewportHeight
         camera.update()

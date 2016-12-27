@@ -4,17 +4,24 @@ const createBox = require('geo-3d-box')
 const simplex = new (require('simplex-noise'))()
 
 const TAU = 6.283185307179586
-const RADIUS = 64
+const RADIUS = 128
 const COUNT = RADIUS * RADIUS
 const POSITION_SCALE = 40
-const MODEL_SCALE = 0.02
+const MODEL_SCALE = 0.023
 const RESET_IN_SECONDS = 15
 const ROTATE_SPEED = 0.0
-const BOX_SIZE = 1
+const BOX_SIZE = 1.5
 const BOX_RATIO = 0.2
+const PASS_DIVISOR = 32
 
 module.exports = function (regl) {
   const box = createBox({size: [BOX_SIZE * BOX_RATIO, BOX_SIZE * BOX_RATIO, BOX_SIZE]})
+  box.positions.forEach(position => {
+    if (position[2] > 0) {
+      position[0] *= 0.5;
+      position[1] *= 0.5;
+    }
+  })
 
   const state = Array(3).fill().map((n, pass) => (
     regl.framebuffer({
@@ -24,10 +31,10 @@ module.exports = function (regl) {
           const buffer = new Float32Array(COUNT * 4)
           for (let i = 0; i < COUNT; i++) {
             const theta = TAU * i / COUNT
-            buffer[i * 4 + 0] = 12 * simplex.noise2D(i, 1 * 0.3, pass)
-            buffer[i * 4 + 1] = 12 * simplex.noise2D(i, 2 * 0.3, pass)
-            buffer[i * 4 + 2] = 22 * simplex.noise2D(i, 3 * 0.3, pass)
-            buffer[i * 4 + 3] = 12 * simplex.noise2D(i, 4 * 0.3, pass)
+            buffer[i * 4 + 0] = 12 * (1 + simplex.noise2D(i, 1 * 0.3, pass))
+            buffer[i * 4 + 1] = 12 * (1 + simplex.noise2D(i, 2 * 0.3, pass))
+            buffer[i * 4 + 2] = 22 * (1 + simplex.noise2D(i, 3 * 0.3, pass))
+            buffer[i * 4 + 3] = 12 * (1 + simplex.noise2D(i, 4 * 0.3, pass))
           }
           return buffer
         })(),
@@ -54,9 +61,8 @@ module.exports = function (regl) {
       #pragma glslify: snoise3 = require(glsl-noise/simplex/3d)
       #pragma glslify: range = require(glsl-range)
 
-      uniform sampler2D prevState;
-      uniform sampler2D currState;
-      uniform float time;
+      uniform sampler2D currState, prevState;
+      uniform float time, passStep;
       varying vec2 uv;
 
       float TAU = 6.283185307179586;
@@ -66,7 +72,7 @@ module.exports = function (regl) {
       float NOISE_SCALE = 0.05;
       float NOISE_SPEED = 0.1;
       float BASE_SPEED = 0.1;
-      float STAGE_RADIUS = 25.0;
+      float STAGE_RADIUS = 10.0;
       float MAX_STAGE_RADIUS = 28.0;
 
       float CENTER_FORCE = 0.0;
@@ -86,7 +92,7 @@ module.exports = function (regl) {
         );
         vec3 toCenter = 0.5 * (1.1 + sin(time)) * normalize(center - currPositionA);
         float distanceToCenter = length(currPositionA - center);
-        toCenter *= min(1.0, max(0.0, range(STAGE_RADIUS, MAX_STAGE_RADIUS, distanceToCenter)));
+        toCenter *= range(STAGE_RADIUS, MAX_STAGE_RADIUS, min(MAX_STAGE_RADIUS, max(STAGE_RADIUS, distanceToCenter)));
 
         // Wandering forces.
         float wanderTheta = TAU * snoise3(vec3(5.0 * uv, time * 0.5));
@@ -101,10 +107,11 @@ module.exports = function (regl) {
         vec3 alignment = vec3(0.0);
         vec3 repulsion = vec3(0.0);
 
-        for (float i = 0.0; i < ${COUNT}.0; i++) {
+        for (float i = 0.0; i < ${COUNT}.0; i += ${PASS_DIVISOR}.0) {
+          float i2 = i + passStep;
           vec2 uvB = vec2(
-            mod(i, ${RADIUS}.0) / ${RADIUS}.0,
-            floor(i / ${RADIUS}.0) / ${RADIUS}.0
+            mod(i2, ${RADIUS}.0) / ${RADIUS}.0,
+            floor(i2 / ${RADIUS}.0) / ${RADIUS}.0
           );
           vec3 prevPositionB = texture2D(prevState, uvB).rgb;
           vec3 currPositionB = texture2D(currState, uvB).rgb;
@@ -118,7 +125,7 @@ module.exports = function (regl) {
 
           // Do calculations here:
           alignment += directionB * pow(unitDistance, 1.5);
-          adhesion += directionBetween * pow(unitDistance, 1.0);
+          adhesion += directionBetween * unitDistance;
           repulsion -= directionBetween * pow(unitDistance, 3.0);
         }
 
@@ -143,6 +150,7 @@ module.exports = function (regl) {
     uniforms: {
       prevState: ({tick}) => state[tick % 3],
       currState: ({tick}) => state[(tick + 1) % 3],
+      passStep: ({tick}) => tick % 2,
       time: ({time}) => time,
       reset: ({time}) => {
         const i = (time / RESET_IN_SECONDS) % 1
@@ -160,6 +168,7 @@ module.exports = function (regl) {
   const drawFlock = regl({
     vert: glsl`
       precision mediump float;
+      #pragma glslify: rotate2d = require(glsl-y-rotate/rotateY)
       #pragma glslify: hslToRgb = require('glsl-hsl2rgb')
       #pragma glslify: lookAt = require('glsl-look-at')
       #pragma glslify: inverse = require(glsl-inverse)
@@ -171,28 +180,32 @@ module.exports = function (regl) {
 
       varying vec3 vColor;
 
+      float TAU = 6.283185307179586;
+
       attribute vec3 position;
       attribute vec3 normal;
       attribute vec2 coordinate;
       attribute float id;
 
-      vec3 lighting (mat3 mat, float speed) {
+      vec3 lighting (mat3 mat, float depth) {
         vec3 transformedNormal = transpose(inverse(mat)) * normal;
         float brightness = max(0.0, dot(transformedNormal, vec3(0.0, 1.0, 0.0)));
-        return hslToRgb(
+        depth = depth * 3.0 - 4.0;
+        vec3 hsl = hslToRgb(
           0.5,
-          0.4 + 0.25 * speed,
-          (0.4 + 0.75 * speed) * mix(0.7, 1.0, brightness)
+          0.4,
+          (0.4 + 0.75 * depth) * mix(0.4, 1.0, brightness)
         );
+        vec3 normalColoring = (rotate2d(TAU * 0.6) * transformedNormal) * 0.5 + 0.5;
+        return mix(normalColoring, hsl, 0.5);
       }
 
       void main () {
         vec4 currPosition = texture2D(currState, coordinate);
         vec4 prevPosition = texture2D(prevState, coordinate);
-        float speed = min(0.2, length(currPosition - prevPosition));
         mat3 rotate = lookAt(prevPosition.xyz, currPosition.xyz, 0.0);
-        vColor = lighting(rotate, speed);
         gl_Position = projection * view * model * (vec4(rotate * position, 1.0) + currPosition);
+        vColor = lighting(rotate, gl_Position.z);
       }
     `,
     frag: `
