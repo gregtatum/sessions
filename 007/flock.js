@@ -51,7 +51,8 @@ module.exports = function (regl) {
     `,
     frag: glsl`
       precision mediump float;
-      #pragma glslify: snoise4 = require(glsl-noise/simplex/4d)
+      #pragma glslify: snoise3 = require(glsl-noise/simplex/3d)
+      #pragma glslify: range = require(glsl-range)
 
       uniform sampler2D prevState;
       uniform sampler2D currState;
@@ -59,11 +60,14 @@ module.exports = function (regl) {
       varying vec2 uv;
 
       float TAU = 6.283185307179586;
+      float PI = 3.141592653589793;
       float DAMPING = 0.001;
       float NOISE_FORCE = 100.0;
       float NOISE_SCALE = 0.05;
       float NOISE_SPEED = 0.1;
       float BASE_SPEED = 0.1;
+      float STAGE_RADIUS = 25.0;
+      float MAX_STAGE_RADIUS = 28.0;
 
       float CENTER_FORCE = 0.0;
 
@@ -77,12 +81,22 @@ module.exports = function (regl) {
         // To origin forces.
         vec3 center = 10.0 * vec3(
           0.0,
-          cos(time * 1.0),
-          sin(time * 1.0)
+          0.0,
+          0.0
         );
-        vec3 toCenter = normalize(center - currPositionA);
+        vec3 toCenter = 0.5 * (1.1 + sin(time)) * normalize(center - currPositionA);
+        float distanceToCenter = length(currPositionA - center);
+        toCenter *= min(1.0, max(0.0, range(STAGE_RADIUS, MAX_STAGE_RADIUS, distanceToCenter)));
 
-        // The fourth parameter is the speed.
+        // Wandering forces.
+        float wanderTheta = TAU * snoise3(vec3(5.0 * uv, time * 0.5));
+        float wanderPhi = PI * 0.5 * snoise3(vec3(5.0 * uv, time * 0.5));
+        vec3 wander = vec3(
+          sin(wanderTheta) * cos(wanderPhi),
+          sin(wanderTheta) * sin(wanderPhi),
+          cos(wanderTheta)
+        );
+
         vec3 adhesion = vec3(0.0);
         vec3 alignment = vec3(0.0);
         vec3 repulsion = vec3(0.0);
@@ -100,23 +114,25 @@ module.exports = function (regl) {
 
           vec3 deltaBetween = currPositionB - currPositionA;
           vec3 directionBetween = normalize(deltaBetween);
-          float inverseDistance = 1.0 / length(deltaBetween);
+          float unitDistance = length(deltaBetween) / (MAX_STAGE_RADIUS * 2.0);
 
           // Do calculations here:
-          alignment += directionB * pow(inverseDistance, 2.0);
-          adhesion += directionBetween * pow(inverseDistance, 2.0);
-          repulsion -= directionBetween * pow(inverseDistance, 4.0);
+          alignment += directionB * pow(unitDistance, 1.5);
+          adhesion += directionBetween * pow(unitDistance, 1.0);
+          repulsion -= directionBetween * pow(unitDistance, 3.0);
         }
 
         vec3 direction = mix(directionA, normalize(
-            5.0 * normalize(alignment) +
-            0.5 * normalize(adhesion) +
-            0.5 * normalize(repulsion) +
-            0.2 * (1.1 + sin(time)) * toCenter
+            0.5 * normalize(alignment) +
+            0.8 * normalize(adhesion) +
+            2.0 * normalize(repulsion) +
+            5.0 * toCenter +
+            0.2 * wander
         ), 0.05);
 
         // Sum the forces
-        vec3 position = currPositionA + 0.2 * direction;
+        float speed = mix(0.3, 0.4, sin(uv.x * TAU + time));
+        vec3 position = currPositionA + speed * direction;
 
         gl_FragColor = vec4(position, 1);
       }
@@ -146,6 +162,8 @@ module.exports = function (regl) {
       precision mediump float;
       #pragma glslify: hslToRgb = require('glsl-hsl2rgb')
       #pragma glslify: lookAt = require('glsl-look-at')
+      #pragma glslify: inverse = require(glsl-inverse)
+      #pragma glslify: transpose = require(glsl-transpose)
       uniform mat4 projection, model, view;
       uniform float viewportHeight;
       uniform sampler2D currState;
@@ -158,8 +176,9 @@ module.exports = function (regl) {
       attribute vec2 coordinate;
       attribute float id;
 
-      vec3 lighting (float speed) {
-        float brightness = max(0.0, dot(normal, vec3(0.608229, 0.760286, 0.228086)));
+      vec3 lighting (mat3 mat, float speed) {
+        vec3 transformedNormal = transpose(inverse(mat)) * normal;
+        float brightness = max(0.0, dot(transformedNormal, vec3(0.0, 1.0, 0.0)));
         return hslToRgb(
           0.5,
           0.4 + 0.25 * speed,
@@ -172,7 +191,7 @@ module.exports = function (regl) {
         vec4 prevPosition = texture2D(prevState, coordinate);
         float speed = min(0.2, length(currPosition - prevPosition));
         mat3 rotate = lookAt(prevPosition.xyz, currPosition.xyz, 0.0);
-        vColor = lighting(speed);
+        vColor = lighting(rotate, speed);
         gl_Position = projection * view * model * (vec4(rotate * position, 1.0) + currPosition);
       }
     `,
