@@ -1,7 +1,7 @@
 const regl = require('../common/regl')({
   extensions: ['OES_texture_float', 'angle_instanced_arrays']
 })
-// require('../common/soundcloud')('https://soundcloud.com/synaptyx/dark-venture')
+require('../common/soundcloud')('https://soundcloud.com/synaptyx/dark-venture')
 const {setupFrameBuffer, drawPostProcessing} = require('./post-process')(regl)
 const setupScene = require('./scene')(regl)
 const drawFlock = require('./flock')(regl)
