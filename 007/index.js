@@ -1,5 +1,5 @@
 const regl = require('../common/regl')({
-  extensions: ['OES_texture_float', 'angle_instanced_arrays']
+  extensions: ['OES_texture_float', 'angle_instanced_arrays', 'WEBGL_color_buffer_float']
 })
 require('../common/soundcloud')('https://soundcloud.com/synaptyx/dark-venture')
 const {setupFrameBuffer, drawPostProcessing} = require('./post-process')(regl)

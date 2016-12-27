@@ -1,5 +1,5 @@
 const regl = require('../common/regl')({
-  extensions: ['OES_texture_float']
+  extensions: ['OES_texture_float', 'WEBGL_color_buffer_float']
 })
 
 const setupScene = require('./scene')(regl)

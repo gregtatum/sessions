@@ -1,6 +1,12 @@
 body {
   margin: 0;
   padding: 0;
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+  background-color: #333;
 }
 
 .title {
@@ -16,6 +22,8 @@ body {
   display: flex;
   vertical-align: middle;
   text-align: center;
+  z-index: 1;
+  text-shadow: 0 0 0.6em #333;
 }
 
 .title h1 {
@@ -30,7 +38,35 @@ body {
   color: #fff;
   text-decoration: none;
   font-size: 2em;
-  padding: 0 0.3em;
+  padding: 0.3em;
   font-weight: bold;
   align-self: center;
 }
+
+.error {
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  right: 0;
+  background-color: #233;
+  color: #fff;
+  display: flex;
+  font-family: sans-serif;
+  padding: 10%;
+  align-content: center;
+  justify-content: center;
+  flex-direction: column;
+  text-align: center;
+}
+
+@media (max-width:700px) {
+  .title {
+    right: 0;
+    left: 0;
+    justify-content: center;
+    font-size: 0.7em;
+  }
+  .title a {
+    padding: 0.3em 0.6em;
+  }

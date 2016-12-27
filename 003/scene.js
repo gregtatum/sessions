@@ -19,8 +19,8 @@ module.exports = function (regl) {
     pinchSpeed: 0.000005,
     rotateSpeed: 0.003,
     damping: 0.02,
-    parent: window,
-    element: window
+    parent: regl._gl.canvas,
+    element: regl._gl.canvas
   })
 
   camera.update()
