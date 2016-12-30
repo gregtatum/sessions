@@ -4,19 +4,23 @@ const vec2 = require('gl-vec2')
 const createDrawPass = require('./draw-pass')
 const defaultProps = {
   scratchFBO: null,
-  divisor: 2
+  divisor: 1
 }
 
 module.exports = function(regl, drawPass, {scratchFBO, divisor} = defaultProps) {
   const blurHorizontalFBO = scratchFBO || regl.framebuffer({
     color: regl.texture({
-      wrap: 'clamp'
+      wrap: 'clamp',
+      mag: 'linear',
+      min: 'linear'
     }),
     depth: true
   })
   const blurFBO = regl.framebuffer({
     color: regl.texture({
-      wrap: 'clamp'
+      wrap: 'clamp',
+      mag: 'linear',
+      min: 'linear'
     }),
     depth: true
   })
@@ -33,8 +37,6 @@ module.exports = function(regl, drawPass, {scratchFBO, divisor} = defaultProps) 
       uniform vec2 resolution;
       uniform vec2 direction;
 
-      float blurSize = 2.0;
-
       void main() {
         gl_FragColor = blur13(sourceFBO, vUv, resolution, direction);
       }
@@ -42,8 +44,8 @@ module.exports = function(regl, drawPass, {scratchFBO, divisor} = defaultProps) 
     uniforms: {
       sourceFBO: regl.prop('sourceFBO'),
       resolution: ({viewportWidth, viewportHeight}) => [viewportWidth, viewportHeight],
-      direction: (_, {direction, blurSize}) => {
-        return vec2.scale([], direction, window.devicePixelRatio * blurSize / divisor)
+      direction: ({viewportHeight}, {direction, blurSize}) => {
+        return vec2.scale([], direction, viewportHeight * blurSize / divisor)
       },
     },
     context: {
@@ -65,23 +67,27 @@ module.exports = function(regl, drawPass, {scratchFBO, divisor} = defaultProps) 
 
   const horizontal = [1, 0]
   const vertical = [0, 1]
+  const blurSize = 0.005
+  const blurHProps = {
+    direction: horizontal,
+    blurSize,
+    targetFrame: blurHorizontalFBO,
+  }
+  const blurHVProps = {
+    direction: vertical,
+    blurSize,
+    sourceFBO: blurHorizontalFBO,
+    targetFrame: blurFBO,
+  }
+  const blurFBOProp = {blurFBO}
+  const withDrawPass = ({sourceFBO}) => {
+    blurHProps.sourceFBO = sourceFBO
+    drawBlur(blurHProps)
+    drawBlur(blurHVProps)
+  }
 
   return (props, callback) => {
-    drawPass(props, ({sourceFBO}) => {
-      const blurSize = 4
-      drawBlur({
-        direction: horizontal,
-        blurSize,
-        sourceFBO,
-        targetFrame: blurHorizontalFBO,
-      })
-      drawBlur({
-        direction: vertical,
-        blurSize,
-        sourceFBO: blurHorizontalFBO,
-        targetFrame: blurFBO,
-      })
-    })
-    return useBlurBuffer({blurFBO}, callback)
+    drawPass(props, withDrawPass)
+    return useBlurBuffer(blurFBOProp, callback)
   }
 }

@@ -22,7 +22,7 @@ if (sessionNumber === undefined) {
   browserifyBundle(() => {
     updateReadme(sessionNumbers)
     generateAllHtml(sessionNumbers)
-    // generateThumbnail()
+    generateThumbnail()
   })
 }
 

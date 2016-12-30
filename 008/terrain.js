@@ -45,8 +45,8 @@ module.exports = function (regl) {
       vec3 terrain(vec2 coordinate) {
         coordinate.y = pow(coordinate.y * 2.0, 2.0) - 3.0;
         coordinate.x = (coordinate.x - 0.5) * mix(0.5, 1.5, 1.0 - coordinate.y);
-
-        return vec3(
+        float divet = 0.3 * clamp(-1.0, 0.0, -1.0 + length(4.0 * (coordinate + vec2(0.0, 0.1))));
+        return vec3(0.0, divet, 0.0) + vec3(
           coordinate.x,
           LARGE_TERRAIN_HEIGHT
             * coordinate.x
@@ -106,13 +106,15 @@ module.exports = function (regl) {
         vec3 positionModified = vPosition;
         positionModified.x *= 0.3 * sin((vPosition.z + vPosition.x * 0.2 + vPosition.y * 0.5) * 30.0);
 
+
+        // Commented out a few for better performance.
         vec3 normal = (
           rotateX(0.3 * snoise4(vec4(positionModified * 10.0, 0.0))) *
-          rotateX(0.05 * snoise4(vec4(positionModified * 50.0, 0.0))) *
+          // rotateX(0.10 * snoise4(vec4(positionModified * 50.0, 0.0))) *
           rotateX(0.05 * snoise4(vec4(positionModified * 100.0, 0.0))) *
-          rotateY(0.3 * snoise4(vec4(vec3(300.0) + positionModified * 10.0, 0.0))) *
+          // rotateY(0.6 * snoise4(vec4(vec3(300.0) + positionModified * 10.0, 0.0))) *
           rotateY(0.05 * snoise4(vec4(vec3(300.0) + positionModified * 50.0, 0.0))) *
-          rotateY(0.05 * snoise4(vec4(vec3(300.0) + positionModified * 100.0, 0.0))) *
+          rotateY(0.10 * snoise4(vec4(vec3(300.0) + positionModified * 100.0, 0.0))) *
           normalize(vNormal)
         );
 
@@ -133,6 +135,17 @@ module.exports = function (regl) {
         color = mix(color, vec3(0.5, 0.5, 0.7),
           max(0.0, min(1.0, (-vPosition.z) * 0.05))
         );
+
+        // Red glow
+        color += (
+          // Color
+          0.75 * vec3(1.0, 0.2, 0.0)
+          // Up and down wave
+          * mix(0.8, 1.0, (2.0 + sin(vPosition.y * 130.0 + time * 8.0) + sin(vPosition.z * 50.0 + vPosition.y * 230.0 + time * 8.0)) * 0.5)
+          // Proximity to sphere
+          * clamp(0.0, 1.0, 1.0 - 1.7 * length(vPosition.xz - vec2(0.0, -0.15)))
+        );
+
         gl_FragColor = vec4(toGamma(color), alpha);
       }`,
     attributes: {

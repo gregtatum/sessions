@@ -25,6 +25,7 @@ module.exports = function (regl) {
     element: regl._gl.canvas
   })
 
+  controls.update()
   camera.update()
 
   const cameraPositionNoise = [0, 0, 0]
@@ -35,7 +36,7 @@ module.exports = function (regl) {
   function update (callback) {
     return ({tick, viewportWidth, viewportHeight, time}) => {
       if (tick !== prevTick) {
-        controls.update()
+        // controls.update()
         controls.copyInto(camera.position, camera.direction, camera.up)
         camera.viewport[2] = viewportWidth
         camera.viewport[3] = viewportHeight

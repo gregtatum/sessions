@@ -15,7 +15,7 @@ module.exports = function createDrawSphere (regl) {
       varying vec3 vColor, vPosition, vNormal;
 
       void main() {
-        vColor = hsl2rgb(0.95, 0.5, 0.5);
+        vColor = hsl2rgb(0.01, 0.8, 0.5);
         vPosition = position;
         vNormal = normal;
         gl_Position = projection * view * model * vec4(position, 1.0);

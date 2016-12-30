@@ -28,7 +28,7 @@ module.exports = function (regl) {
       uniform float time;
       varying vec2 vUv;
       void main() {
-        gl_Position = vec4(position.xy, 0.0, 1.0);
+        gl_Position = vec4(position.xy, 0.9999, 1.0);
         vUv = vec2(position.x, position.y) * 0.5 + 0.5;
       }
     `,
@@ -90,9 +90,6 @@ module.exports = function (regl) {
       gl_FragColor = vec4(color, 1.0);
     }`,
 
-    depth: {
-      enable: false
-    }
 
   })
 }
