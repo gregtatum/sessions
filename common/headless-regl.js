@@ -38,7 +38,8 @@ module.exports = function headlessRegl (config) {
       }
     },
     addEventListener: NOOP,
-    removeEventListener: NOOP
+    removeEventListener: NOOP,
+    XMLHttpRequest: require('xmlhttprequest')
   }
 
   Object.assign(global, global.window)

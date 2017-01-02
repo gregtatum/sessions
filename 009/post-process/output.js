@@ -24,7 +24,7 @@ module.exports = function createDrawBloom (regl, drawPass) {
         float grain = mix(1.0, 1.5, 0.5 + 0.5 * snoise3(vec3(uv * scale * 0.1, time * 2.0)));
         float vignette = clamp(0.0, 1.0, mix(1.0, 0.8, pow(2.0 * length(vec2(frameWarp * 0.025, 0.0) + vUv - 0.5), 5.0)));
         vec3 vignetteColor = vec3(0.1, 0.09, 0.07);
-        vec3 blurInOutColor = mix(sourceColor, blurColor, pow(snoise2(vec2(0.0, time * 0.5)) * 0.5 + 0.5, 5.0));
+        vec3 blurInOutColor = mix(sourceColor, blurColor, pow(snoise2(vec2(0.0, time * 0.5)) * 0.5 + 0.5, 4.0));
         vec3 bloomColor = SOURCE_DIM * blurInOutColor + blurColor * INTENSITY;
         gl_FragColor = vec4(toGamma(
           1.8 * pow(grain * noise + mix(vignetteColor, bloomColor, vignette), vec3(1.3))

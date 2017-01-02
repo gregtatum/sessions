@@ -44,6 +44,7 @@
     "simplex-noise": "2.2.0",
     "soundcloud-badge": "1.1.0",
     "standard": "8.6.0",
-    "uglify-js": "2.7.5"
+    "uglify-js": "2.7.5",
+    "xmlhttprequest": "1.8.0"
   }
 }
