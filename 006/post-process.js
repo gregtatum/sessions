@@ -1,7 +1,6 @@
-const FILTER_RADIUS = 2
 const glsl = require('glslify')
 
-module.exports = function(regl) {
+module.exports = function (regl) {
   const framebuffer = regl.framebuffer({
     color: regl.texture({
       wrap: 'clamp'
@@ -109,7 +108,7 @@ module.exports = function(regl) {
         time: ({time}) => time,
         framebuffer: () => framebuffer,
         resolution: ({viewportWidth, viewportHeight}) => [viewportWidth, viewportHeight],
-        ratio: () => window.devicePixelRatio,
+        ratio: () => window.devicePixelRatio
       },
       depth: { enable: false },
       count: 3

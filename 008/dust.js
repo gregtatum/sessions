@@ -45,7 +45,7 @@ module.exports = function dustDrawer (regl) {
       position: fill(DUST_COUNT, i => [i, Math.random(), Math.random()])
     },
     depth: {
-      enable: false,
+      enable: false
     },
     blend: {
       enable: true,
@@ -58,7 +58,7 @@ module.exports = function dustDrawer (regl) {
       equation: {
         rgb: 'add',
         alpha: 'add'
-      },
+      }
     },
     primitive: 'points',
     count: DUST_COUNT

@@ -7,14 +7,14 @@ const simplex = new (require('simplex-noise'))()
 const lerp = require('lerp')
 const SEGMENT_COUNT = 50
 
-module.exports = function(regl) {
+module.exports = function (regl) {
   const arc = createArc({
     startRadian: 0,
     endRadian: TAU,
     innerRadius: 0.18,
     outerRadius: 0.2,
     numBands: 2,
-    numSlices: 128,
+    numSlices: 128
   })
 
   const thinArc = createArc({
@@ -23,7 +23,7 @@ module.exports = function(regl) {
     innerRadius: 0.98,
     outerRadius: 1,
     numBands: 2,
-    numSlices: 128,
+    numSlices: 128
   })
 
   const segmentArc = Array(SEGMENT_COUNT).fill().map((n, i) => {
@@ -35,7 +35,7 @@ module.exports = function(regl) {
       innerRadius: 0.29,
       outerRadius: 0.35,
       numBands: 2,
-      numSlices: 128,
+      numSlices: 128
     })
   }).reduce(combineSimplicialComplexes)
 
@@ -44,7 +44,7 @@ module.exports = function(regl) {
     pieceSize: TAU * 0.1, // size of the pieces
     numPieces: 8, // how many pieces to place
     quadsPerPiece: 5, // how many times the piece is split
-    height: 0.2, // the height of the ring
+    height: 0.2 // the height of the ring
   })
 
   const updateNoise = regl({
@@ -81,7 +81,7 @@ module.exports = function(regl) {
     uniforms: {
       model: ({model}) => mat4.translate([], model, [0, -0.02, 0])
     },
-    elements: segmentArc.cells,
+    elements: segmentArc.cells
   })
 
   const drawArc = regl({
@@ -134,7 +134,7 @@ module.exports = function(regl) {
       model: ({model}, {scale = 1.0, height = 1.0, translate = 0}) => (
         mat4.scale([], mat4.translate([], model, [0, translate, 0]), [scale, scale * height, scale])
       )
-    },
+    }
   })
 
   const drawTube = tubeDrawer(drawThinArc)
@@ -174,10 +174,10 @@ function tubeDrawer (drawThinArc) {
   return () => drawThinArc(props)
 }
 
-function combineSimplicialComplexes(a, b) {
+function combineSimplicialComplexes (a, b) {
   return mapObj(a, (aValue, key) => {
     const bValue = b[key]
-    if (key === "cells") {
+    if (key === 'cells') {
       return [...aValue, ...bValue.map(cell => cell.map(index => index + a.positions.length))]
     }
     return [...aValue, ...bValue]

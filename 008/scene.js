@@ -1,4 +1,3 @@
-const mat4 = require('gl-mat4')
 const mat3 = require('gl-mat3')
 const vec3 = require('gl-vec3')
 const TAU = 6.283185307179586
@@ -65,7 +64,7 @@ module.exports = function (regl) {
       light1: vec3.normalize([], [-0.2, 0.5, 1]),
       lightColor0: [1.0, 1.0, 1.0],
       lightColor1: [0.2, 0.3, 0.3],
-      viewNormal: () => mat3.normalFromMat4([], camera.view),
+      viewNormal: () => mat3.normalFromMat4([], camera.view)
     }
   })
 }

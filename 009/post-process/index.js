@@ -1,6 +1,4 @@
-const glsl = require('glslify')
-
-module.exports = function(regl) {
+module.exports = function (regl) {
   const sceneFBO = regl.framebuffer({
     color: regl.texture({
       wrap: 'clamp'

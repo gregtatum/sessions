@@ -1,5 +1,4 @@
 const glsl = require('glslify')
-const random = require('random-spherical/array')()
 const mat4 = require('gl-mat4')
 
 const TAU = 6.283185307179586

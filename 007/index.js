@@ -25,7 +25,6 @@ const frameLoop = regl.frame(() => {
     regl.clear(clearBlack)
     drawPostProcessing()
     window.frameDone()
-
   } catch (error) {
     frameLoop.cancel()
   }

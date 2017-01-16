@@ -3,10 +3,8 @@ const mat4 = require('gl-mat4')
 const createBox = require('geo-3d-box')
 const simplex = new (require('simplex-noise'))()
 
-const TAU = 6.283185307179586
 const RADIUS = 128
 const COUNT = RADIUS * RADIUS
-const POSITION_SCALE = 40
 const MODEL_SCALE = 0.023
 const RESET_IN_SECONDS = 15
 const ROTATE_SPEED = 0.0
@@ -18,8 +16,8 @@ module.exports = function (regl) {
   const box = createBox({size: [BOX_SIZE * BOX_RATIO, BOX_SIZE * BOX_RATIO, BOX_SIZE]})
   box.positions.forEach(position => {
     if (position[2] > 0) {
-      position[0] *= 0.5;
-      position[1] *= 0.5;
+      position[0] *= 0.5
+      position[1] *= 0.5
     }
   })
 
@@ -30,7 +28,6 @@ module.exports = function (regl) {
         data: (() => {
           const buffer = new Float32Array(COUNT * 4)
           for (let i = 0; i < COUNT; i++) {
-            const theta = TAU * i / COUNT
             buffer[i * 4 + 0] = 12 * (1 + simplex.noise2D(i, 1 * 0.3, pass))
             buffer[i * 4 + 1] = 12 * (1 + simplex.noise2D(i, 2 * 0.3, pass))
             buffer[i * 4 + 2] = 22 * (1 + simplex.noise2D(i, 3 * 0.3, pass))
@@ -242,7 +239,7 @@ module.exports = function (regl) {
         const output = []
         return ({time}) => mat4.rotateY(output, scale, +time * ROTATE_SPEED - 1.5)
       })()
-    },
+    }
   })
 
   return () => {

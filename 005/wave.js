@@ -178,7 +178,7 @@ module.exports = function (regl) {
         const output = []
         return ({time}) => mat4.rotateY(output, scale, +time * ROTATE_SPEED - 1.5)
       })()
-    },
+    }
   })
 
   return () => {

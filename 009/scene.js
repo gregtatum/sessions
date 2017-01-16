@@ -31,7 +31,6 @@ module.exports = function (regl) {
   const cameraPositionNoise = [0, 0, 0]
   const cameraDirectionNoise = [0, 0, 0]
   const cameraNoiseSize = 0.05
-  const cameraPosition = [0, 0, 0]
 
   let prevTick
   function update (callback) {
@@ -82,7 +81,7 @@ module.exports = function (regl) {
       light1: vec3.normalize([], [-0.2, 0.5, 1]),
       lightColor0: [1.0, 1.0, 1.0],
       lightColor1: [0.2, 0.3, 0.3],
-      viewNormal: withArrays(1, ([out]) => mat3.normalFromMat4(out, camera.view)),
+      viewNormal: withArrays(1, ([out]) => mat3.normalFromMat4(out, camera.view))
     }
   })
 }

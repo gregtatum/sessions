@@ -88,8 +88,7 @@ module.exports = function (regl) {
       color += 0.85 * vec3((1.5 - vUv.y * 1.2) + vUv.x * 0.1);
 
       gl_FragColor = vec4(color, 1.0);
-    }`,
-
+    }`
 
   })
 }

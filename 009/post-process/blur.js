@@ -1,13 +1,11 @@
-const FILTER_RADIUS = 2
 const glsl = require('glslify')
 const vec2 = require('gl-vec2')
-const createDrawPass = require('./draw-pass')
 const defaultProps = {
   scratchFBO: null,
   divisor: 1
 }
 
-module.exports = function(regl, drawPass, {scratchFBO, divisor} = defaultProps) {
+module.exports = function (regl, drawPass, {scratchFBO, divisor} = defaultProps) {
   const blurHorizontalFBO = scratchFBO || regl.framebuffer({
     color: regl.texture({
       wrap: 'clamp',
@@ -46,7 +44,7 @@ module.exports = function(regl, drawPass, {scratchFBO, divisor} = defaultProps) 
       resolution: ({viewportWidth, viewportHeight}) => [viewportWidth, viewportHeight],
       direction: ({viewportHeight}, {direction, blurSize}) => {
         return vec2.scale([], direction, viewportHeight * blurSize / divisor)
-      },
+      }
     },
     context: {
       updateBlurFBOs: ({viewportWidth, viewportHeight}) => {
@@ -71,13 +69,13 @@ module.exports = function(regl, drawPass, {scratchFBO, divisor} = defaultProps) 
   const blurHProps = {
     direction: horizontal,
     blurSize,
-    targetFrame: blurHorizontalFBO,
+    targetFrame: blurHorizontalFBO
   }
   const blurHVProps = {
     direction: vertical,
     blurSize,
     sourceFBO: blurHorizontalFBO,
-    targetFrame: blurFBO,
+    targetFrame: blurFBO
   }
   const blurFBOProp = {blurFBO}
   const withDrawPass = ({sourceFBO}) => {

@@ -39,7 +39,7 @@ module.exports = function createDrawBloom (regl, drawPass) {
       blurFBO: regl.prop('blurFBO'),
       time: ({time}) => time,
       scale: ({viewportHeight}) => viewportHeight
-    },
+    }
   })
 
   return (props) => {

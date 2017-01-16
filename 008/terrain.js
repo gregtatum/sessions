@@ -1,8 +1,6 @@
 const glsl = require('glslify')
 const mat4 = require('gl-mat4')
-const vec3 = require('gl-vec3')
 const createPlane = require('primitive-plane')
-const TAU = 6.283185307179586
 const lights = Array(2).fill().map((n, i) => i)
 
 module.exports = function (regl) {
@@ -12,7 +10,6 @@ module.exports = function (regl) {
     // subdivisions
     250, 250
   )
-  const rotate = mat4.rotateX([], mat4.identity([]), TAU * 0.25)
   plane.positions.forEach(position => {
     const [x, z, y] = position
     position[0] = x + 0.5
@@ -62,9 +59,9 @@ module.exports = function (regl) {
       }
 
       vec3 calculateNormal(vec3 cartesian, vec2 coordinate) {
-      	vec3 tangent = normalize(terrain(vec2(coordinate.x, coordinate.y + EPSILON)) - cartesian);
-      	vec3 binormal = normalize(terrain(vec2(coordinate.x + EPSILON, coordinate.y)) - cartesian);
-      	return cross(tangent, binormal);
+        vec3 tangent = normalize(terrain(vec2(coordinate.x, coordinate.y + EPSILON)) - cartesian);
+        vec3 binormal = normalize(terrain(vec2(coordinate.x + EPSILON, coordinate.y)) - cartesian);
+        return cross(tangent, binormal);
       }
 
       void main () {
@@ -157,7 +154,7 @@ module.exports = function (regl) {
       time: ({time}) => time,
       model: mat4.identity([])
     },
-    lineWidth: Math.min(2 * window.devicePixelRatio, regl.limits.lineWidthDims[1]),
+    lineWidth: Math.min(2 * window.devicePixelRatio, regl.limits.lineWidthDims[1])
 
   })
 }

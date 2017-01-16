@@ -21,7 +21,7 @@ module.exports = function createDrawBloom (regl, drawPass) {
       dimSource: propGetter('dimSource', 1),
       intensity: propGetter('intensity', 1),
       exponent: propGetter('exponent', 2)
-    },
+    }
   })
 
   return (props) => {

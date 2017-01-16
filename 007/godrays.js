@@ -60,10 +60,10 @@ module.exports = function createDraw (regl) {
       equation: {
         rgb: 'add',
         alpha: 'add'
-      },
+      }
     },
     depth: {
-      enable: false,
-    },
+      enable: false
+    }
   })
 }

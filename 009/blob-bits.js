@@ -2,7 +2,7 @@ const randomSpherical = require('random-spherical/array')()
 const glsl = require('glslify')
 const vec3 = require('gl-vec3')
 
-module.exports = function(regl) {
+module.exports = function (regl) {
   const points = Array(1000).fill().map((n, i) => {
     const point = randomSpherical()
     const scale = 1 - Math.pow(Math.random(), 2)

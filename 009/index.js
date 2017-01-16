@@ -11,7 +11,6 @@ const drawBlur = require('./post-process/blur')(regl, drawPass)
 const drawOutput = require('./post-process/output')(regl, drawPass)
 
 const clear = { depth: 1, color: [0, 0, 0, 1] }
-const clearBlack = { depth: 1, color: [0, 0, 0.1, 1], framebuffer: null }
 const bloomProps = {
   intensity: 0.6,
   exponent: 3

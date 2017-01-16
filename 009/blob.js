@@ -1,13 +1,11 @@
 const mat4 = require('gl-mat4')
 const vec3 = require('gl-vec3')
-const normals = require('angle-normals')
 const resl = require('resl')
 const glsl = require('glslify')
 const createIcosphere = require('icosphere')
 const angleNormals = require('angle-normals')
 
 module.exports = function (regl) {
-
   const envmap = regl.texture()
   const icosphere = createIcosphere(5)
   const {
@@ -107,7 +105,7 @@ module.exports = function (regl) {
     uniforms: {
       // model: ({time}) => mat4.scale([], mat4.rotateY([], mat4.identity([]), time), [0.02, 0.02, 0.02]),
       model: mat4.translate([], mat4.scale([], mat4.identity([]), [0.2, 0.2, 0.2]), [0, 0, 0]),
-      envmap: envmap,
+      envmap: envmap
     },
     elements: icosphere.cells
   })
@@ -133,7 +131,7 @@ module.exports = function (regl) {
 const axisA = [0, 0, 1]
 const axisB = vec3.normalize([], [0, 0.001, 1])
 
-function calculateTBN(normals) {
+function calculateTBN (normals) {
   const tangents = normals.map(calculateTangent)
   const binormals = normals.map((normal, i) => calculateBinormal(normal, tangents[i]))
   return {
