@@ -1,18 +1,14 @@
 const regl = require('../common/regl')()
-
 const setupScene = require('./scene')(regl)
-
 const drawBackground = require('./background')(regl)
 const drawDust = require('./dust')(regl)
 const drawSpheres = require('./spheres')(regl)
-
 const clear = { depth: 1, color: [0, 0, 0, 1] }
 
 const frameLoop = regl.frame(() => {
   try {
     regl.clear(clear)
     setupScene(({time}) => {
-      // drawGrid()
       drawBackground()
       drawSpheres(time)
       drawDust()

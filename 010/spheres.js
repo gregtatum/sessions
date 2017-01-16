@@ -14,6 +14,8 @@ const CHILD_SCALE = 0.4
 
 module.exports = function (regl) {
   const setupSphereShader = createSphereShader(regl)
+
+  const drawSphereShort = createDrawCall(regl, createIcosphere(0))
   const drawSphereTall = createDrawCall(regl, createIcosphere(1))
   const drawSphereGrande = createDrawCall(regl, createIcosphere(2))
   const drawSphereVenti = createDrawCall(regl, createIcosphere(3))
@@ -21,11 +23,13 @@ module.exports = function (regl) {
   const rootNode = createNodes(CHILD_NODES, MAX_DEPTH)
   const props = flattenNodes(rootNode)
 
+  const propsShort = props.filter(prop => prop.depth < MAX_DEPTH - 2)
   const propsTall = props.filter(prop => prop.depth < MAX_DEPTH - 1)
   const propsGrande = props.filter(prop => prop.depth === MAX_DEPTH - 1)
   const propsVenti = props.filter(prop => prop.depth === MAX_DEPTH)
 
   const drawGeometry = () => {
+    drawSphereShort(propsShort)
     drawSphereTall(propsTall)
     drawSphereGrande(propsGrande)
     drawSphereVenti(propsVenti)
