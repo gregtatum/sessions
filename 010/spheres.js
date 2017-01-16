@@ -13,11 +13,72 @@ const CHILD_DISTANCE = 4
 const CHILD_SCALE = 0.4
 
 module.exports = function (regl) {
-  const sphere = createIcosphere(2)
+  const setupSphereShader = createSphereShader(regl)
+  const drawSphereTall = createDrawCall(regl, createIcosphere(1))
+  const drawSphereGrande = createDrawCall(regl, createIcosphere(2))
+  const drawSphereVenti = createDrawCall(regl, createIcosphere(3))
+
   const rootNode = createNodes(CHILD_NODES, MAX_DEPTH)
   const props = flattenNodes(rootNode)
 
-  const drawSphere = regl({
+  const propsTall = props.filter(prop => prop.depth < MAX_DEPTH - 1)
+  const propsGrande = props.filter(prop => prop.depth === MAX_DEPTH - 1)
+  const propsVenti = props.filter(prop => prop.depth === MAX_DEPTH)
+
+  const drawGeometry = () => {
+    drawSphereTall(propsTall)
+    drawSphereGrande(propsGrande)
+    drawSphereVenti(propsVenti)
+  }
+
+  return (time) => {
+    updateRootNode(rootNode, time)
+    updateSphereTree(rootNode, time)
+    setupSphereShader(drawGeometry)
+  }
+}
+
+function createNodes (n, depth, branch) {
+  return {
+    props: { center: [0, 0, 0], scale: BASE_SCALE.slice(), depth },
+    children: depth > 0
+      ? Array.from({length: n}, i => createNodes(n, depth - 1))
+      : null
+  }
+}
+
+function flattenNodes (node, result = []) {
+  result.push(node.props)
+  if (node.children) {
+    node.children.forEach(node => flattenNodes(node, result))
+  }
+  return result
+}
+
+function updateSphereTree (node, time, branch = 0, parentCenter, parentScale) {
+  const {
+    props: {center, scale},
+    children
+  } = node
+
+  if (parentCenter) {
+    vec3.copy(scale, parentScale)
+    vec3.scale(scale, scale, CHILD_SCALE)
+    vec3.copy(center, parentCenter)
+    center[0] += parentScale[0] * CHILD_DISTANCE * (2.0 + Math.sin(time))
+    vec3.rotateY(center, center, parentCenter, 0.01 * time / scale[0] + TAU * branch / CHILD_NODES)
+    vec3.rotateX(center, center, parentCenter, 0.003 * time / scale[0] + TAU * branch / CHILD_NODES)
+  }
+
+  if (children) {
+    for (let i = 0; i < children.length; i++) {
+      updateSphereTree(children[i], time, i, center, scale)
+    }
+  }
+}
+
+function createSphereShader (regl) {
+  return regl({
     vert: glsl`
       precision mediump float;
       #pragma glslify: rotateX = require(../common/glsl/rotateX)
@@ -78,70 +139,32 @@ module.exports = function (regl) {
     `,
     uniforms: {
       fov: regl.context('fov'),
-      aspectRatio: ({viewportHeight, viewportWidth}) => viewportWidth / viewportHeight,
-      model: (_, {scale, center}) => {
-        return mat4.scale([], mat4.translate([], mat4.identity([]), center), scale)
-      }
+      aspectRatio: ({viewportHeight, viewportWidth}) => viewportWidth / viewportHeight
     },
-    attributes: {
-      position: sphere.positions,
-      normal: normals(sphere.cells, sphere.positions)
-    },
-    elements: sphere.cells,
     cull: {
       enable: true,
       face: 'back'
     }
   })
-
-  return (time) => {
-    updateRootNode(rootNode, time)
-    updateSphereTree(rootNode, time)
-    drawSphere(props)
-  }
 }
 
-function createNodes (n, depth, branch) {
-  return {
-    props: { center: [0, 0, 0], scale: [0.05, 0.05, 0.05] },
-    children: depth > 0
-      ? Array.from({length: n}, i => createNodes(n, depth - 1))
-      : null
-  }
-}
-
-function flattenNodes (node, result = []) {
-  result.push(node.props)
-  if (node.children) {
-    node.children.forEach(node => flattenNodes(node, result))
-  }
-  return result
-}
-
-function updateSphereTree (node, time, branch = 0, parentCenter, parentScale) {
-  const {
-    props: {center, scale},
-    children
-  } = node
-
-  if (parentCenter) {
-    vec3.copy(scale, parentScale)
-    vec3.scale(scale, scale, CHILD_SCALE)
-    vec3.copy(center, parentCenter)
-    center[0] += parentScale[0] * CHILD_DISTANCE * (2.0 + Math.sin(time))
-    vec3.rotateY(center, center, parentCenter, 0.01 * time / scale[0] + TAU * branch / CHILD_NODES)
-    vec3.rotateX(center, center, parentCenter, 0.003 * time / scale[0] + TAU * branch / CHILD_NODES)
-  }
-
-  if (children) {
-    for (let i = 0; i < children.length; i++) {
-      updateSphereTree(children[i], time, i, center, scale)
-    }
-  }
+function createDrawCall (regl, sphere) {
+  return regl({
+    attributes: {
+      position: sphere.positions,
+      normal: normals(sphere.cells, sphere.positions)
+    },
+    uniforms: {
+      model: (_, {scale, center}) => {
+        return mat4.scale([], mat4.translate([], mat4.identity([]), center), scale)
+      }
+    },
+    elements: sphere.cells
+  })
 }
 
 function updateRootNode (rootNode, time) {
-  const {center, scale} = rootNode.props
+  const {center} = rootNode.props
   vec3.copy(center, BASE_CENTER)
   vec3.rotateY(center, center, origin, 1 * time)
   center[1] = 0.1 * Math.sin(time)

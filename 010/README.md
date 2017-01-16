@@ -1,3 +1,3 @@
-This started as exploring using a 360 degree texture, and organically grew into this weird microscopic jelly blob.
+I was curious about exploring reflections with this piece. I boiled down all of the background calculations to a single function that takes a direction vector. This was quite nice for computing the background and reflections of the spheres. Earlier on I had an error computing the reflection since I wasn't taking into account the view matrix. After fixing it I ended up reverting the fix since I preferred the "mistaken" implementation.
 
-* Environment map of Oregon (ogd-oregon-360.jpg) due to Max Ogden (@maxogd on GitHub)
+One part I still haven't solved is computing the background in a single triangle draw call. I added an icosphere around the camera which was much easier to handle the background.
