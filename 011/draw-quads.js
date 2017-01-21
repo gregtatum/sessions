@@ -1,9 +1,14 @@
 const glsl = require('glslify')
 // const DRAW_MODE = 'lines'
 const DRAW_MODE = 'triangle'
-const MAX_POSITIONS = 10000
+const MAX_POSITIONS = 500000
+const SPLIT_COUNT = 1000
 const COUNT_PER_QUAD = DRAW_MODE === 'lines' ? 8 : 6
 const MAX_ELEMENTS = COUNT_PER_QUAD * MAX_POSITIONS
+const WIDTH = 0.3
+const HEIGHT = 0.1
+const TAPER = 0.25
+
 const vec3 = require('gl-vec3')
 const {
   splitQuadVertical,
@@ -36,15 +41,22 @@ module.exports = function (regl) {
       data: elementsData,
       count: 0
     }),
+    cull: {
+      enable: true
+    }
   }
 
   const quads = createQuads(buffers)
   const updateBuffers = quadBuffersUpdater(quads, buffers)
   const draw = createDraw(regl, buffers)
+  const popExtrudes = extrudePopper(quads)
 
   return () => {
     updateBuffers()
     draw()
+    for (let i = 0; i < 4; i++) {
+      popExtrudes()
+    }
   }
 }
 
@@ -140,6 +152,7 @@ function createDraw (regl, buffers) {
     },
     elements: buffers.elements,
     primitive: DRAW_MODE,
+    cull: { enable: true }
   })
 }
 
@@ -151,38 +164,78 @@ function createDraw (regl, buffers) {
  * -1,-1    1, -1
  */
 function createQuads () {
+  const w = WIDTH / 2
+  const h = -HEIGHT / 2
   const quads = {
     positions: [
-      [-0.3, 0, -0.3],
-      [-0.3, 0, 0.3],
-      [0.3, 0, 0.3],
-      [0.3, 0, -0.3],
+      [-w, h, -w],
+      [-w, h, w],
+      [w, h, w],
+      [w, h, -w],
+
+      [w, h, -w],
+      [w, h, w],
+      [-w, h, w],
+      [-w, h, -w],
     ],
     normals: [
       [0, 1, 0],
       [0, 1, 0],
       [0, 1, 0],
       [0, 1, 0],
+      [0, -1, 0],
+      [0, -1, 0],
+      [0, -1, 0],
+      [0, -1, 0],
     ],
-    cells: [[0, 1, 2, 3]]
+    cells: [[0, 1, 2, 3], [4, 5, 6, 7]]
   }
 
-  const splitCount = 100
-  // splitQuadHorizontalDisjoint(quads, quads.cells[0], 0.5)
-  for (let i = 0; i < splitCount; i++) {
-    const randomCell = quads.cells[Math.floor(Math.random() * quads.cells.length)]
-    ;(Math.random() < 0.2
+  // Create a box by extruding the top facing quad, and leaving the bottom facing one.
+  extrudeQuadDisjoint(quads, quads.cells[0], TAPER, HEIGHT)
+
+  for (let i = 0; i < SPLIT_COUNT; i++) {
+    let largestCell
+    let largestSize = 0
+    quads.cells.forEach(cell => {
+      const size = vec3.squaredDistance(quads.positions[cell[0]], quads.positions[cell[2]])
+      if (size > largestSize) {
+        largestCell = cell
+        largestSize = size
+      }
+    })
+    const xLength = vec3.squaredDistance(quads.positions[largestCell[0]], quads.positions[largestCell[3]])
+    const yLength = vec3.squaredDistance(quads.positions[largestCell[0]], quads.positions[largestCell[1]])
+
+    ;(Math.random() > 0.4 && yLength > xLength
       ? splitQuadHorizontalDisjoint
-      : splitQuadVerticalDisjoint)(quads, randomCell, Math.random())
+      : splitQuadVerticalDisjoint)(quads, largestCell, Math.random() * 0.25 + 0.5 - 0.125)
   }
-  quads.cells.forEach(cell => {
-    const distance = 0.05 * Math.random()
-    extrudeQuadDisjoint(quads, cell, 0.1, 0)
-    extrudeQuadDisjoint(quads, cell, 0.0, distance)
-    extrudeQuadDisjoint(quads, cell, 0.05, distance * 0.05)
-  })
+
+  // quads.cells.forEach(cell => {
+  //   const distance = 0.01 * Math.random()
+  //   extrudeQuadDisjoint(quads, cell, 0.0, distance)
+  //   extrudeQuadDisjoint(quads, cell, 0.05, distance * 0.05)
+  // })
 
   return quads
+}
+
+function extrudePopper (quads, tick) {
+  let i = 0
+  // Sort cells by height, top to bottom
+  const cells = quads.cells.slice().sort((a, b) => {
+    return quads.positions[b[0]][1] - quads.positions[a[0]][1]
+  })
+  return () => {
+    i++
+    const cell = cells[i]
+    if (cell) {
+      const distance = 0.01 * Math.random()
+      extrudeQuadDisjoint(quads, cell, 0.0, distance)
+      extrudeQuadDisjoint(quads, cell, 0.05, distance * 0.05)
+    }
+  }
 }
 
 function quadBuffersUpdater (quads, buffers) {

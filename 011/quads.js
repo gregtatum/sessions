@@ -120,7 +120,6 @@ function splitQuadHorizontalDisjoint (quads, targetCell, t = 0.5) {
   normals[cd2] = normal.slice()
 }
 
-
 /**
  *  b----------c
  *  |\   q1   /|

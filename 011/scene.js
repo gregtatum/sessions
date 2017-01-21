@@ -22,7 +22,7 @@ module.exports = function (regl) {
     distanceBounds: [0.5, 1.5],
     zoomSpeed: 0.0001,
     pinchSpeed: 0.0001,
-    rotateSpeed: 0.01,
+    rotateSpeed: 0.1,
     // damping: 0.01,
     parent: regl._gl.canvas,
     element: regl._gl.canvas
@@ -50,12 +50,9 @@ module.exports = function (regl) {
     uniforms: {
       projection: update(() => camera.projection),
       view: () => camera.view,
-      viewRotation: withArrays(1, ([out]) => {
-        mat4.copy(out, camera.view)
-        return out
-      }),
       projView: () => camera.projView,
-      invProjView: () => camera.invProjView,
+      inverseProjection: () => mat4.invert([], camera.projection),
+      inverseView: () => mat4.invert([], camera.view),
       viewNormal: withArrays(1, ([out]) => mat3.normalFromMat4(out, camera.view)),
       projectionViewNormal: withArrays(1, ([out]) => mat3.normalFromMat4(out, camera.projView)),
       light0: vec3.normalize([], [0, 1, 0.1]),

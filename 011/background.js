@@ -1,43 +1,33 @@
 const glsl = require('glslify')
-const createIcosphere = require('icosphere')
 
 module.exports = function (regl) {
-  const sphere = createIcosphere(2)
-
   return regl({
     vert: glsl`
       precision mediump float;
-      attribute vec3 position;
-      uniform mat4 projection, viewRotation;
-      varying vec3 vPosition;
-      varying vec2 vUv;
+      attribute vec2 position;
+      uniform mat4 inverseProjection, inverseView;
+      varying vec3 vDirection;
 
-      void main() {
-        vPosition = position;
-        gl_Position = projection * viewRotation * vec4(position, 0.5);
+      void main () {
+        vDirection = mat3(inverseView) * (inverseProjection * vec4(position, 0, 1)).xyz;
+        gl_Position = vec4(position, 0.999, 1);
       }
     `,
     frag: glsl`
       precision mediump float;
       #pragma glslify: computeBackground = require(./background)
 
-      varying vec3 vPosition;
       uniform float time;
-
-      #define PI ${Math.PI}
+      varying vec3 vDirection;
 
       void main () {
-        vec3 direction = normalize(vPosition);
+        vec3 direction = normalize(vDirection);
         gl_FragColor = computeBackground(direction, time);
       }
     `,
     attributes: {
-      position: sphere.positions
+      position: [[-4, -4], [0, 4], [4, -4]]
     },
-    depth: {
-      mask: false,
-      enable: false
-    },
-    elements: sphere.cells
+    count: 3
   })
 }
