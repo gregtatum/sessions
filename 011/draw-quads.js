@@ -1,13 +1,14 @@
 const glsl = require('glslify')
 // const DRAW_MODE = 'lines'
 const DRAW_MODE = 'triangle'
-const MAX_POSITIONS = 500000
+const MAX_POSITIONS = 300000
 const SPLIT_COUNT = 1000
 const COUNT_PER_QUAD = DRAW_MODE === 'lines' ? 8 : 6
 const MAX_ELEMENTS = COUNT_PER_QUAD * MAX_POSITIONS
 const WIDTH = 0.3
 const HEIGHT = 0.1
 const TAPER = 0.25
+const SPLITS_PER_DRAW = 8
 
 const vec3 = require('gl-vec3')
 const {
@@ -52,11 +53,14 @@ module.exports = function (regl) {
   const popExtrudes = extrudePopper(quads)
 
   return () => {
-    updateBuffers()
-    draw()
-    for (let i = 0; i < 4; i++) {
-      popExtrudes()
+    let didExtrude = false
+    for (let i = 0; i < SPLITS_PER_DRAW; i++) {
+      didExtrude = popExtrudes()
     }
+    if (didExtrude) {
+      updateBuffers()
+    }
+    draw()
   }
 }
 
@@ -197,7 +201,11 @@ function createQuads () {
   for (let i = 0; i < SPLIT_COUNT; i++) {
     let largestCell
     let largestSize = 0
-    quads.cells.forEach(cell => {
+    quads.cells.forEach((cell, i) => {
+      if (i === 1) {
+        // Skip the bottom cell
+        return
+      }
       const size = vec3.squaredDistance(quads.positions[cell[0]], quads.positions[cell[2]])
       if (size > largestSize) {
         largestCell = cell
@@ -234,6 +242,7 @@ function extrudePopper (quads, tick) {
       const distance = 0.01 * Math.random()
       extrudeQuadDisjoint(quads, cell, 0.0, distance)
       extrudeQuadDisjoint(quads, cell, 0.05, distance * 0.05)
+      return true
     }
   }
 }
