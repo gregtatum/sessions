@@ -12,13 +12,9 @@ const SPLITS_PER_DRAW = 8
 
 const vec3 = require('gl-vec3')
 const {
-  splitQuadVertical,
-  splitQuadHorizontal,
   splitQuadVerticalDisjoint,
   splitQuadHorizontalDisjoint,
-  insetQuad,
-  insetQuadDisjoint,
-  extrudeQuadDisjoint,
+  extrudeQuadDisjoint
 } = require('./quads')
 
 module.exports = function (regl) {
@@ -31,20 +27,17 @@ module.exports = function (regl) {
     elementsData,
     positions: regl.buffer({
       usage: 'dynamic',
-      data: positionsData,
+      data: positionsData
     }),
     normals: regl.buffer({
       usage: 'dynamic',
-      data: normalsData,
+      data: normalsData
     }),
     elements: regl.elements({
       usage: 'dynamic',
       data: elementsData,
       count: 0
-    }),
-    cull: {
-      enable: true
-    }
+    })
   }
 
   const quads = createQuads(buffers)
@@ -92,7 +85,7 @@ function createDraw (regl, buffers) {
       void main() {
         gl_FragColor = vec4(vColor, 1.0);
       }
-    `,*/
+    `, */
     vert: glsl`
       precision mediump float;
       #pragma glslify: rotateX = require(../common/glsl/rotateX)
@@ -180,7 +173,7 @@ function createQuads () {
       [w, h, -w],
       [w, h, w],
       [-w, h, w],
-      [-w, h, -w],
+      [-w, h, -w]
     ],
     normals: [
       [0, 1, 0],
@@ -190,7 +183,7 @@ function createQuads () {
       [0, -1, 0],
       [0, -1, 0],
       [0, -1, 0],
-      [0, -1, 0],
+      [0, -1, 0]
     ],
     cells: [[0, 1, 2, 3], [4, 5, 6, 7]]
   }
@@ -304,7 +297,7 @@ function quadBuffersUpdater (quads, buffers) {
 
     buffers.elements({
       data: elementsData,
-      count: quads.cells.length * COUNT_PER_QUAD,
+      count: quads.cells.length * COUNT_PER_QUAD
     })
   }
 }
