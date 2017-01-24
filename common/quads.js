@@ -231,11 +231,33 @@ var extrude = (() => {
   }
 })()
 
-var averageNormalForPosition = (() => {
-  const cells = []
+function calculatePositionIndexToCells (quads) {
+  const toCells = {}
+  for (let i = 0; i < quads.cells.length; i++) {
+    const cell = quads.cells[i]
+    for (let j = 0; j < cell.length; j++) {
+      const index = cell[j]
+      let arr = toCells[index]
+      if (!arr) {
+        arr = []
+        toCells[index] = arr
+      }
+      arr.push(cell)
+    }
+  }
+  return toCells
+}
 
-  return function averageNormalForPosition (quads, positionIndex, target, normalCache) {
-    cellsFromPositionIndex(quads, positionIndex, cells)
+var averageNormalForPosition = (() => {
+  const cellsCache = []
+
+  return function averageNormalForPosition (quads, positionIndex, target, normalCache, positionIndexToCells) {
+    let cells
+    if (positionIndexToCells) {
+      cells = positionIndexToCells[positionIndex]
+    } else {
+      cells = cellsFromPositionIndex(quads, positionIndex, cellsCache)
+    }
     vec3.set(target, 0, 0, 0)
 
     // Add neighboring cells' normals
@@ -255,9 +277,9 @@ var averageNormalForPosition = (() => {
     }
     vec3.normalize(target, target)
 
-    // Clean out the cells array
-    while (cells.length) {
-      cells.pop()
+    // Clean out the cellsCache.
+    while (cellsCache.length) {
+      cellsCache.pop()
     }
     return target
   }
@@ -450,7 +472,7 @@ function clone (quads, cell) {
 }
 
 function updateNormals (quads, cell) {
-  const normal = quads.normals[cell[0]]
+  let normal = quads.normals[cell[0]]
   getCellNormal(quads, cell, normal)
   vec3.copy(quads.normals[cell[1]], normal)
   vec3.copy(quads.normals[cell[2]], normal)
@@ -475,7 +497,7 @@ var getCellNormal = (() => {
 function cellsFromPositionIndex (quads, index, target = []) {
   for (let i = 0; i < quads.cells.length; i++) {
     const cell = quads.cells[i]
-    if (cell.indexOf(index) > 0) {
+    if (cell.indexOf(index) >= 0) {
       target.push(cell)
     }
   }
@@ -496,6 +518,189 @@ function flip (quads, cell) {
   return cell
 }
 
+function createQuad (options, quads = {}) {
+  if (!quads.positions) {
+    quads.positions = []
+  }
+  if (!quads.normals) {
+    quads.normals = []
+  }
+  if (!quads.cells) {
+    quads.cells = []
+  }
+  const index = quads.positions.length
+  let direction
+  const cell = [
+    index,
+    index + 1,
+    index + 2,
+    index + 3
+  ]
+  quads.cells.push(cell)
+  if (options.positions) {
+    quads.positions.push(options.positions[0])
+    quads.positions.push(options.positions[1])
+    quads.positions.push(options.positions[2])
+    quads.positions.push(options.positions[3])
+  } else {
+    let w, h
+    if (options.w && options.h) {
+      w = options.w / 2
+      h = options.h / 2
+    } else {
+      w = 0.5
+      h = 0.5
+    }
+    const facing = options.facing || 'y+'
+    const axis = facing[0]
+    direction = facing[1]
+    switch (axis) {
+      case 'x':
+        quads.positions.push([h, -w, -w])
+        quads.positions.push([h, w, -w])
+        quads.positions.push([h, w, w])
+        quads.positions.push([h, -w, w])
+        break
+      case 'y':
+        quads.positions.push([-w, h, -w])
+        quads.positions.push([-w, h, w])
+        quads.positions.push([w, h, w])
+        quads.positions.push([w, h, -w])
+        break
+      case 'z':
+        quads.positions.push([-w, -w, h])
+        quads.positions.push([-w, w, h])
+        quads.positions.push([w, w, h])
+        quads.positions.push([w, -w, h])
+        break
+    }
+  }
+
+  const normal = getCellNormal(quads, cell, [])
+  quads.normals.push(normal)
+  quads.normals.push(normal.slice())
+  quads.normals.push(normal.slice())
+  quads.normals.push(normal.slice())
+
+  if (direction === '-') {
+    flip(quads, cell)
+  }
+
+  return {quads, cell}
+}
+
+function createBoxDisjoint (x = 1, y = 1, z = 1, optionalQuads) {
+  const {quads, cell} = createQuad({w: x, h: z}, optionalQuads)
+  quads.positions.forEach(position => {
+    position[1] -= y
+  })
+  clone(quads, cell)
+  flip(quads, quads.cells[1])
+  extrudeDisjoint(quads, cell, 0, y)
+  return quads
+}
+
+function createBox (x, y, z, optionalQuads) {
+  return mergePositions(createBoxDisjoint(x, y, z, optionalQuads))
+}
+
+function mergePositions (quads) {
+  const {positions, normals, cells} = quads
+  // Go through each position.
+  for (let aIndex = 0; aIndex < positions.length; aIndex++) {
+    const a = positions[aIndex]
+
+    // Compare this position to the rest of the position.
+    for (let bIndex = aIndex + 1; bIndex < positions.length; bIndex++) {
+      const b = positions[bIndex]
+
+      // If the positions match, then remove "a" from positions.
+      if (a[0] === b[0] && a[1] === b[1] && a[2] === b[2]) {
+        // Update the cells to point to the bIndex.
+        for (let k = 0; k < cells.length; k++) {
+          const cell = cells[k]
+          for (let l = 0; l < cell.length; l++) {
+            const index = cell[l]
+            if (index === aIndex) {
+              cell[l] = bIndex - 1
+            } else if (index > aIndex) {
+              cell[l]--
+            }
+          }
+        }
+
+        // Remove the position and continue
+        positions.splice(aIndex, 1)
+        normals.splice(aIndex, 1)
+        aIndex--
+        break
+      }
+    }
+  }
+
+  const normalCache = new Map()
+  for (let i = 0; i < positions.length; i++) {
+    averageNormalForPosition(quads, i, normals[i], normalCache)
+  }
+  return quads
+}
+
+function elementsFromQuads (regl, quads, drawMode = 'triangles', ArrayType = Uint16Array) {
+  const countPerCell = drawMode === 'lines' ? 8 : 6
+  const elements = new ArrayType(quads.cells.length * countPerCell)
+
+  if (drawMode === 'lines') {
+    // lines
+    for (let i = 0; i < quads.cells.length; i++) {
+      const [a, b, c, d] = quads.cells[i]
+      const offset = i * countPerCell
+      // Lines
+      elements[offset + 0] = a
+      elements[offset + 1] = b
+
+      elements[offset + 2] = b
+      elements[offset + 3] = c
+
+      elements[offset + 4] = c
+      elements[offset + 5] = d
+
+      elements[offset + 6] = d
+      elements[offset + 7] = a
+    }
+  } else {
+    for (let i = 0; i < quads.cells.length; i++) {
+      const offset = i * countPerCell
+      const [a, b, c, d] = quads.cells[i]
+      // Triangle:
+      elements[offset + 0] = a
+      elements[offset + 1] = b
+      elements[offset + 2] = c
+
+      elements[offset + 3] = c
+      elements[offset + 4] = d
+      elements[offset + 5] = a
+    }
+  }
+  return elements
+}
+
+function computeNormals (quads) {
+  if (!quads.normals) {
+    quads.normals = []
+  }
+  const normalCache = new Map()
+  const positionIndexToCells = calculatePositionIndexToCells(quads)
+  for (let i = 0; i < quads.positions.length; i++) {
+    let normal = quads.normals[i]
+    if (!normal) {
+      normal = []
+      quads.normals[i] = normal
+    }
+    averageNormalForPosition(quads, i, normal, normalCache, positionIndexToCells)
+  }
+  return quads
+}
+
 module.exports = {
   splitVertical,
   splitQuadHorizontal,
@@ -511,5 +716,11 @@ module.exports = {
   cellsFromPositionIndex,
   averageNormalForPosition,
   clone,
-  flip
+  flip,
+  createQuad,
+  createBoxDisjoint,
+  createBox,
+  mergePositions,
+  elementsFromQuads,
+  computeNormals
 }
