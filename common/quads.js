@@ -1,4 +1,5 @@
 const vec3 = require('gl-vec3')
+const catmullClark = require('gl-catmull-clark')
 
 /**
  *  b---bc---c
@@ -556,22 +557,22 @@ function createQuad (options, quads = {}) {
     direction = facing[1]
     switch (axis) {
       case 'x':
-        quads.positions.push([h, -w, -w])
-        quads.positions.push([h, w, -w])
-        quads.positions.push([h, w, w])
-        quads.positions.push([h, -w, w])
+        quads.positions.push([0, -w, -h])
+        quads.positions.push([0, w, -h])
+        quads.positions.push([0, w, h])
+        quads.positions.push([0, -w, h])
         break
       case 'y':
-        quads.positions.push([-w, h, -w])
-        quads.positions.push([-w, h, w])
-        quads.positions.push([w, h, w])
-        quads.positions.push([w, h, -w])
+        quads.positions.push([-w, 0, -h])
+        quads.positions.push([-w, 0, h])
+        quads.positions.push([w, 0, h])
+        quads.positions.push([w, 0, -h])
         break
       case 'z':
-        quads.positions.push([-w, -w, h])
-        quads.positions.push([-w, w, h])
-        quads.positions.push([w, w, h])
-        quads.positions.push([w, -w, h])
+        quads.positions.push([-w, -h, 0])
+        quads.positions.push([-w, h, 0])
+        quads.positions.push([w, h, 0])
+        quads.positions.push([w, -h, 0])
         break
     }
   }
@@ -592,7 +593,7 @@ function createQuad (options, quads = {}) {
 function createBoxDisjoint (x = 1, y = 1, z = 1, optionalQuads) {
   const {quads, cell} = createQuad({w: x, h: z}, optionalQuads)
   quads.positions.forEach(position => {
-    position[1] -= y
+    position[1] -= y / 2
   })
   clone(quads, cell)
   flip(quads, quads.cells[1])
@@ -701,6 +702,175 @@ function computeNormals (quads) {
   return quads
 }
 
+function splitLoop (quads, cell, t = 0.5, opposite) {
+  const loop = [cell]
+  let cellIndexA, cellIndexB, cellIndexC, cellIndexD
+  if (opposite) {
+    cellIndexA = 1
+    cellIndexB = 2
+    cellIndexC = 3
+    cellIndexD = 0
+  } else {
+    cellIndexA = 0
+    cellIndexB = 1
+    cellIndexC = 2
+    cellIndexD = 3
+  }
+
+  const positionIndexLB = cell[cellIndexA]
+  const positionIndexLT = cell[cellIndexB]
+  const positionIndexMT = quads.positions.length
+  const positionIndexMB = quads.positions.length + 1
+  const positionIndexRT = cell[cellIndexC]
+  const positionIndexRB = cell[cellIndexD]
+
+  const positionA = vec3.lerp([], quads.positions[positionIndexLT], quads.positions[positionIndexRT], t)
+  const positionB = vec3.lerp([], quads.positions[positionIndexLB], quads.positions[positionIndexRB], t)
+  const normalA = vec3.lerp([], quads.normals[positionIndexLT], quads.normals[positionIndexRT], t)
+  const normalB = vec3.lerp([], quads.normals[positionIndexLB], quads.normals[positionIndexRB], t)
+  quads.positions.push(positionA)
+  quads.positions.push(positionB)
+  quads.normals.push(vec3.normalize(normalA, normalA))
+  quads.normals.push(vec3.normalize(normalB, normalB))
+
+  // Split cells
+  const cellL = cell
+  const cellR = []
+  quads.cells.push(cellR)
+  cellL[cellIndexC] = positionIndexMT
+  cellL[cellIndexD] = positionIndexMB
+  cellR[cellIndexA] = positionIndexMB
+  cellR[cellIndexB] = positionIndexMT
+  cellR[cellIndexC] = positionIndexRT
+  cellR[cellIndexD] = positionIndexRB
+
+  // Split by walking up and down from the cell, and then merge the last points if they
+  // meet.
+  _mergePositionsIfEqual(
+    quads,
+    _walkAndSplitLoop(quads, positionIndexLT, positionIndexMT, positionIndexRT, t),
+    _walkAndSplitLoop(quads, positionIndexRB, positionIndexMB, positionIndexLB, 1 - t)
+  )
+
+  return quads
+}
+
+function _mergePositionsIfEqual (quads, positionIndexA, positionIndexB) {
+  const positionA = quads.positions[positionIndexA]
+  const positionB = quads.positions[positionIndexB]
+  if (
+    positionIndexA >= 0 &&
+    positionIndexB >= 0 &&
+    positionA[0] === positionB[0] &&
+    positionA[1] === positionB[1] &&
+    positionA[2] === positionB[2]
+  ) {
+    debugger
+  }
+}
+
+/**
+ * Utility function to split quads in a loop in a single direction, based off of the
+ * previously split quad's positions. The cell orientation is based off the previously
+ * split cell.
+ *
+ *  LT----MT---RT
+ *   |    .     |
+ *   |    .     | <- split this cell
+ *   |    .     |
+ *  LB----MB---RB
+ *   |    |     |
+ *   |    |     | <- previous cell
+ *   |    |     |
+ *   *----*-----*
+ */
+function _walkAndSplitLoop (quads, positionIndexLB, positionIndexMB, positionIndexRB, t) {
+  let newPositionIndex
+  while (true) {
+    const cell = cellFromEdge(quads, positionIndexLB, positionIndexRB)
+    if (!cell) {
+      break
+    }
+    const cellIndexA = cell.indexOf(positionIndexLB)
+    const cellIndexD = cell.indexOf(positionIndexRB)
+    const cellIndexB = (cellIndexA + 1) % 4
+    const cellIndexC = (cellIndexD + 3) % 4
+
+    const positionIndexLT = cell[cellIndexB]
+    const positionIndexMT = quads.positions.length
+    const positionIndexRT = cell[cellIndexC]
+
+    // Create a new middle position at the opposite end
+    const position = vec3.lerp([], quads.positions[positionIndexLT], quads.positions[positionIndexRT], t)
+    const normal = vec3.lerp([], quads.normals[positionIndexLT], quads.normals[positionIndexRT], t)
+    vec3.normalize(normal, normal)
+    quads.positions.push(position)
+    quads.normals.push(normal)
+
+    // Construct the split cells.
+    const cellL = cell
+    const cellR = []
+    quads.cells.push(cellR)
+
+    cellL[cellIndexC] = positionIndexMT
+    cellL[cellIndexD] = positionIndexMB
+
+    cellR[cellIndexA] = positionIndexMB
+    cellR[cellIndexB] = positionIndexMT
+    cellR[cellIndexC] = positionIndexRT
+    cellR[cellIndexD] = positionIndexRB
+
+    // Modify the arguments to keep on walking.
+    positionIndexLB = positionIndexLT
+    positionIndexMB = positionIndexMT
+    positionIndexRB = positionIndexRT
+
+    newPositionIndex = positionIndexMT
+  }
+  return newPositionIndex
+}
+
+function cellFromEdge (quads, positionIndexA, positionIndexB) {
+  return quads.cells.find(cell => {
+    const cellIndexA = cell.indexOf(positionIndexA)
+    if (cellIndexA >= 0) {
+      if (
+        cell[(cellIndexA + 1) % 4] === positionIndexB ||
+        cell[(cellIndexA + 3) % 4] === positionIndexB
+      ) {
+        return true
+      }
+    }
+    return false
+  })
+}
+
+function averagePositions (a, b, result = []) {
+  return vec3.scale(result, vec3.add(result, a, b), 0.5)
+}
+
+function averageNormals (a, b, result = []) {
+  return vec3.normalize(result, vec3.add(result, a, b))
+}
+
+function createGeometryGetter (quads, key) {
+  const geometry = quads[key]
+  let start = geometry.length
+  return {
+    mark: () => start = geometry.length,
+    get: () => geometry.slice(start, geometry.length)
+  }
+}
+
+function subdivide (quads, subdivisions, positions = quads.positions, cells = quads.cells) {
+  const result = catmullClark(positions, cells, subdivisions, false)
+  quads.positions = result.positions
+  quads.cells = result.cells
+  computeNormals(quads)
+  return quads
+}
+
+
 module.exports = {
   splitVertical,
   splitQuadHorizontal,
@@ -722,5 +892,9 @@ module.exports = {
   createBox,
   mergePositions,
   elementsFromQuads,
-  computeNormals
+  computeNormals,
+  splitLoop,
+  cellFromEdge,
+  createGeometryGetter,
+  subdivide,
 }
