@@ -67,7 +67,7 @@ function splitVerticalDisjoint (quads, targetCell, t = 0.5) {
  *  |        |
  *  a--------d
  */
-function splitQuadHorizontal ({positions, cells}, targetCell, t = 0.5) {
+function splitHorizontal ({positions, cells}, targetCell, t = 0.5) {
   const [a, b, c, d] = targetCell
   const positionA = positions[a]
   const positionB = positions[b]
@@ -257,7 +257,7 @@ var averageNormalForPosition = (() => {
     if (positionIndexToCells) {
       cells = positionIndexToCells[positionIndex]
     } else {
-      cells = cellsFromPositionIndex(quads, positionIndex, cellsCache)
+      cells = getCellsFromPositionIndex(quads, positionIndex, cellsCache)
     }
     vec3.set(target, 0, 0, 0)
 
@@ -495,7 +495,7 @@ var getCellNormal = (() => {
   }
 })()
 
-function cellsFromPositionIndex (quads, index, target = []) {
+function getCellsFromPositionIndex (quads, index, target = []) {
   for (let i = 0; i < quads.cells.length; i++) {
     const cell = quads.cells[i]
     if (cell.indexOf(index) >= 0) {
@@ -746,26 +746,50 @@ function splitLoop (quads, cell, t = 0.5, opposite) {
 
   // Split by walking up and down from the cell, and then merge the last points if they
   // meet.
-  _mergePositionsIfEqual(
-    quads,
-    _walkAndSplitLoop(quads, positionIndexLT, positionIndexMT, positionIndexRT, t),
+  const newPositionIndex = _walkAndSplitLoop(quads, positionIndexLT, positionIndexMT, positionIndexRT, t)
+  const didMerge = _mergePositionsIfEqual(quads, newPositionIndex, positionIndexMB)
+
+  if (!didMerge) {
     _walkAndSplitLoop(quads, positionIndexRB, positionIndexMB, positionIndexLB, 1 - t)
-  )
+  }
 
   return quads
 }
 
 function _mergePositionsIfEqual (quads, positionIndexA, positionIndexB) {
-  const positionA = quads.positions[positionIndexA]
-  const positionB = quads.positions[positionIndexB]
-  if (
-    positionIndexA >= 0 &&
-    positionIndexB >= 0 &&
-    positionA[0] === positionB[0] &&
-    positionA[1] === positionB[1] &&
-    positionA[2] === positionB[2]
-  ) {
-    debugger
+  const {positions, normals, cells} = quads
+  if (positionIndexA >= 0 && positionIndexB >= 0) {
+    const positionA = positions[positionIndexA]
+    const positionB = positions[positionIndexB]
+    if(
+      positionA[0] === positionB[0] &&
+      positionA[1] === positionB[1] &&
+      positionA[2] === positionB[2]
+    ) {
+      const positionIndexSaved = positionIndexA < positionIndexB
+        ? positionIndexA
+        : positionIndexB
+      const positionIndexDeleted = positionIndexA > positionIndexB
+        ? positionIndexA
+        : positionIndexB
+
+      // Update the cells.
+      for (let k = 0; k < cells.length; k++) {
+        const cell = cells[k]
+        for (let l = 0; l < cell.length; l++) {
+          const positionIndex = cell[l]
+          if (positionIndex === positionIndexDeleted) {
+            cell[l] = positionIndexSaved
+          } else if (positionIndex > positionIndexDeleted) {
+            cell[l] = positionIndex - 1
+          }
+        }
+      }
+
+      // Remove the position and continue
+      positions.splice(positionIndexDeleted, 1)
+      normals.splice(positionIndexDeleted, 1)
+    }
   }
 }
 
@@ -787,7 +811,7 @@ function _mergePositionsIfEqual (quads, positionIndexA, positionIndexB) {
 function _walkAndSplitLoop (quads, positionIndexLB, positionIndexMB, positionIndexRB, t) {
   let newPositionIndex
   while (true) {
-    const cell = cellFromEdge(quads, positionIndexLB, positionIndexRB)
+    const cell = getCellFromEdge(quads, positionIndexLB, positionIndexRB)
     if (!cell) {
       break
     }
@@ -830,8 +854,11 @@ function _walkAndSplitLoop (quads, positionIndexLB, positionIndexMB, positionInd
   return newPositionIndex
 }
 
-function cellFromEdge (quads, positionIndexA, positionIndexB) {
+function getCellFromEdge (quads, positionIndexA, positionIndexB, previousCell) {
   return quads.cells.find(cell => {
+    if (cell === previousCell) {
+      return false
+    }
     const cellIndexA = cell.indexOf(positionIndexA)
     if (cellIndexA >= 0) {
       if (
@@ -862,6 +889,13 @@ function createGeometryGetter (quads, key) {
   }
 }
 
+function getNewGeometry (quads, key, callback) {
+  const geometry = quads[key]
+  let start = geometry.length
+  callback()
+  return geometry.slice(start, geometry.length)
+}
+
 function subdivide (quads, subdivisions, positions = quads.positions, cells = quads.cells) {
   const result = catmullClark(positions, cells, subdivisions, false)
   quads.positions = result.positions
@@ -870,31 +904,150 @@ function subdivide (quads, subdivisions, positions = quads.positions, cells = qu
   return quads
 }
 
+function computeCenterPositions (quads) {
+  const { positions, cells } = quads
+  return cells.map(([aI, bI, cI, dI]) => {
+    const a = positions[aI]
+    const b = positions[bI]
+    const c = positions[cI]
+    const d = positions[dI]
+    return [
+      (a[0] + b[0] + c[0] + d[0]) * 0.25,
+      (a[1] + b[1] + c[1] + d[1]) * 0.25,
+      (a[2] + b[2] + c[2] + d[2]) * 0.25
+    ]
+  })
+}
+
+function insetLoop (quads, cell, t = 0.5, opposite) {
+  const tA = 1 - 0.5 * t
+  const tB = 0.5 * t + (1 - tA) * t
+  splitLoop(quads, cell, tA, opposite)
+  splitLoop(quads, cell, tB, opposite)
+  console.log(tA, tB)
+  return quads
+}
+
+function getLoopPositions (quads, cell, opposite) {
+
+}
+
+function getLoop (quads, cell, type, opposite) {
+  if (type === 'cells') {
+    return _getLoopCells(quads, cell, opposite)
+  }
+  let positionIndex, positionIndexB
+  if (opposite) {
+    positionIndexLB = cell[1]
+    positionIndexRB = cell[2]
+  } else {
+    positionIndexLB = cell[0]
+    positionIndexRB = cell[1]
+  }
+
+  return [
+    ..._getLoopOneDirection(quads, cell, type, positionIndexLB, positionIndexRB),
+    ...cell.map(i => quads[type][i]),
+    ..._getLoopOneDirection(quads, cell, type, positionIndexRB, positionIndexLB).reverse()
+  ]
+}
+
+function _getLoopCells (quads, cell, opposite) {
+  let positionIndex, positionIndexB
+  if (opposite) {
+    positionIndexLB = cell[1]
+    positionIndexRB = cell[2]
+  } else {
+    positionIndexLB = cell[0]
+    positionIndexRB = cell[1]
+  }
+
+  return [
+    ..._getLoopCellsOneDirection(quads, cell, positionIndexLB, positionIndexRB),
+    cell,
+    ..._getLoopCellsOneDirection(quads, cell, positionIndexRB, positionIndexLB).reverse()
+  ]
+}
+
+function _getLoopCellsOneDirection (quads, cell, indexA, indexB) {
+  const loop = []
+  let positionIndexLB = indexA
+  let positionIndexRB = indexB
+  let neighborCell = cell
+  while (true) {
+    neighborCell = getCellFromEdge(quads, positionIndexLB, positionIndexRB, neighborCell)
+    if (!neighborCell || neighborCell === cell) {
+      break
+    }
+
+    loop.push(neighborCell)
+
+    const cellIndexA = neighborCell.indexOf(positionIndexLB)
+    const cellIndexD = neighborCell.indexOf(positionIndexRB)
+    const cellIndexB = (cellIndexA + 1) % 4
+    const cellIndexC = (cellIndexD + 3) % 4
+
+    // Modify the arguments to keep on walking.
+    positionIndexLB = neighborCell[cellIndexB]
+    positionIndexRB = neighborCell[cellIndexC]
+  }
+  return loop
+}
+
+function _getLoopOneDirection (quads, cell, type, indexA, indexB) {
+  const loop = []
+  let positionIndexLB = indexA
+  let positionIndexRB = indexB
+  let neighborCell = cell
+  while (true) {
+    neighborCell = getCellFromEdge(quads, positionIndexLB, positionIndexRB, neighborCell)
+    if (!neighborCell || neighborCell === cell) {
+      break
+    }
+
+    const cellIndexA = neighborCell.indexOf(positionIndexLB)
+    const cellIndexD = neighborCell.indexOf(positionIndexRB)
+    const cellIndexB = (cellIndexA + 1) % 4
+    const cellIndexC = (cellIndexD + 3) % 4
+
+    loop.push(quads[type][neighborCell[cellIndexB]])
+    loop.push(quads[type][neighborCell[cellIndexC]])
+
+    // Modify the arguments to keep on walking.
+    positionIndexLB = neighborCell[cellIndexB]
+    positionIndexRB = neighborCell[cellIndexC]
+  }
+  return loop
+}
 
 module.exports = {
-  splitVertical,
-  splitQuadHorizontal,
-  splitVerticalDisjoint,
-  splitHorizontalDisjoint,
-  inset,
-  extrude,
-  insetDisjoint,
-  extrudeDisjoint,
-  getCenter,
-  getCellNormal,
-  updateNormals,
-  cellsFromPositionIndex,
   averageNormalForPosition,
   clone,
-  flip,
-  createQuad,
-  createBoxDisjoint,
-  createBox,
-  mergePositions,
-  elementsFromQuads,
+  computeCenterPositions,
   computeNormals,
-  splitLoop,
-  cellFromEdge,
+  createBox,
+  createBoxDisjoint,
   createGeometryGetter,
+  createQuad,
+  elementsFromQuads,
+  extrude,
+  extrudeDisjoint,
+  flip,
+  getCellNormal,
+  getCellFromEdge,
+  getCellsFromPositionIndex,
+  getCenter,
+  getLoop,
+  getNewGeometry,
+  inset,
+  insetDisjoint,
+  insetLoop,
+  mergePositions,
   subdivide,
+  splitHorizontal,
+  splitHorizontalDisjoint,
+  splitLoop,
+  splitVertical,
+  splitVerticalDisjoint,
+  updateNormals,
 }
