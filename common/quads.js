@@ -924,7 +924,6 @@ function insetLoop (quads, cell, t = 0.5, opposite) {
   const tB = 0.5 * t + (1 - tA) * t
   splitLoop(quads, cell, tA, opposite)
   splitLoop(quads, cell, tB, opposite)
-  console.log(tA, tB)
   return quads
 }
 
