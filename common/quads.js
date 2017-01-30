@@ -935,7 +935,7 @@ function getLoop (quads, cell, type, opposite) {
   if (type === 'cells') {
     return _getLoopCells(quads, cell, opposite)
   }
-  let positionIndex, positionIndexB
+  let positionIndexLB, positionIndexRB
   if (opposite) {
     positionIndexLB = cell[1]
     positionIndexRB = cell[2]
@@ -952,7 +952,7 @@ function getLoop (quads, cell, type, opposite) {
 }
 
 function _getLoopCells (quads, cell, opposite) {
-  let positionIndex, positionIndexB
+  let positionIndexLB, positionIndexRB
   if (opposite) {
     positionIndexLB = cell[1]
     positionIndexRB = cell[2]
