@@ -761,7 +761,7 @@ function _mergePositionsIfEqual (quads, positionIndexA, positionIndexB) {
   if (positionIndexA >= 0 && positionIndexB >= 0) {
     const positionA = positions[positionIndexA]
     const positionB = positions[positionIndexB]
-    if(
+    if (
       positionA[0] === positionB[0] &&
       positionA[1] === positionB[1] &&
       positionA[2] === positionB[2]
@@ -905,18 +905,20 @@ function subdivide (quads, subdivisions, positions = quads.positions, cells = qu
 }
 
 function computeCenterPositions (quads) {
-  const { positions, cells } = quads
-  return cells.map(([aI, bI, cI, dI]) => {
-    const a = positions[aI]
-    const b = positions[bI]
-    const c = positions[cI]
-    const d = positions[dI]
-    return [
-      (a[0] + b[0] + c[0] + d[0]) * 0.25,
-      (a[1] + b[1] + c[1] + d[1]) * 0.25,
-      (a[2] + b[2] + c[2] + d[2]) * 0.25
-    ]
-  })
+  return quads.cells.map(cell => computeCellCenter(quads, cell))
+}
+
+function computeCellCenter (quads, [aI, bI, cI, dI]) {
+  const { positions } = quads
+  const a = positions[aI]
+  const b = positions[bI]
+  const c = positions[cI]
+  const d = positions[dI]
+  return [
+    (a[0] + b[0] + c[0] + d[0]) * 0.25,
+    (a[1] + b[1] + c[1] + d[1]) * 0.25,
+    (a[2] + b[2] + c[2] + d[2]) * 0.25
+  ]
 }
 
 function insetLoop (quads, cell, t = 0.5, opposite) {
@@ -1019,10 +1021,38 @@ function _getLoopOneDirection (quads, cell, type, indexA, indexB) {
   return loop
 }
 
+function mirror (quads, cells, axis) {
+  const mirrorMap = {}
+
+  cells.forEach(cell => {
+    const mirrorCell = cell.map(positionIndex => {
+      let mirrorIndex = mirrorMap[positionIndex]
+      if (mirrorIndex === undefined) {
+        mirrorIndex = quads.positions.length
+        mirrorMap[positionIndex] = mirrorIndex
+        const position = quads.positions[positionIndex]
+        const normal = quads.normals[positionIndex]
+        const mirrorPosition = position.slice()
+        const mirrorNormal = normal.slice()
+        mirrorPosition[axis] *= -1
+        mirrorNormal[axis] *= -1
+        quads.positions.push(mirrorPosition)
+        quads.normals.push(mirrorNormal)
+      }
+      return mirrorIndex
+    })
+    mirrorCell.reverse()
+    quads.cells.push(mirrorCell)
+  })
+
+  return quads
+}
+
 module.exports = {
   averageNormalForPosition,
   clone,
   computeCenterPositions,
+  computeCellCenter,
   computeNormals,
   createBox,
   createBoxDisjoint,
@@ -1042,11 +1072,12 @@ module.exports = {
   insetDisjoint,
   insetLoop,
   mergePositions,
+  mirror,
   subdivide,
   splitHorizontal,
   splitHorizontalDisjoint,
   splitLoop,
   splitVertical,
   splitVerticalDisjoint,
-  updateNormals,
+  updateNormals
 }
