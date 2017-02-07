@@ -22,10 +22,10 @@ module.exports = function (regl) {
     theta: THETA,
     distanceBounds: [0.75, 1.25],
     phiBounds: [Math.PI * 0.5, Math.PI * 0.5],
-    thetaBounds: [THETA - 1, THETA + 1],
+    thetaBounds: [THETA - 0.2, THETA + 0.2],
     zoomSpeed: 0.0001,
     pinchSpeed: 0.0001,
-    rotateSpeed: 0.0025,
+    rotateSpeed: 0.0005,
     damping: 0.01,
     parent: regl._gl.canvas,
     element: regl._gl.canvas
