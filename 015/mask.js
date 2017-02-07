@@ -2,10 +2,13 @@ const glsl = require('glslify')
 const vec3 = require('gl-vec3')
 const mat4 = require('gl-mat4')
 const quad = require('../common/quads')
+const createRandom = require('@tatumcreative/random')
 const ORIGIN = [0, 0, 0]
+const TAU = 6.283185307179586
 
 module.exports = function (regl) {
   const mesh = createMesh()
+  const centerPositions = quad.computeCenterPositions(mesh)
 
   return {
     drawMask: createDrawMask(regl, mesh),
@@ -18,26 +21,41 @@ function createDrawMask (regl, mesh) {
     vert: glsl`
       precision mediump float;
       attribute vec3 normal, position;
-      uniform mat4 model, view, projection;
-      varying vec3 vNormal;
+      uniform mat4 headModel, model, view, projection;
+      uniform mat3 normalHeadModel, normalModel, normalView;
+      uniform vec3 cameraPosition;
+      varying vec3 vPosition, vNormal, vCameraVector;
+      varying float vDepth;
 
       void main() {
-        vNormal = normal;
-        gl_Position = projection * view * vec4(position * 0.4, 1.0);
+        // Calculate global positioning
+        vec4 globalPosition = model * headModel * vec4(position * 0.5, 1.0);
+        gl_Position = projection * view * globalPosition;
+
+        // Calculate varyings.
+        vDepth = max(0.0, globalPosition.z + 0.5) + 0.2;
+        vNormal = normalView * normalModel * normalHeadModel * normal;
+        vCameraVector = normalView * (globalPosition.xyz - cameraPosition);
+        vPosition = globalPosition.xyz;
       }
     `,
     frag: glsl`
       precision mediump float;
       #pragma glslify: matcap = require(matcap)
-      uniform vec3 cameraPosition;
+      uniform mat4 view;
+      uniform mat3 normalView;
       uniform sampler2D matcapTexture;
-      varying vec3 vNormal;
+      varying vec3 vPosition, vNormal, vCameraVector;
+      varying float vDepth;
 
       void main() {
-        vec3 normal = normalize(vNormal);
-        vec2 uv = matcap(cameraPosition, normal);
+        vec2 uv = matcap(
+          normalize(vCameraVector),
+          normalize(vNormal)
+        );
+
         vec3 color = texture2D(matcapTexture, uv).rgb;
-        gl_FragColor = vec4(color * 0.6, 1.0);
+        gl_FragColor = vec4(color * vDepth, 1.0);
       }
     `,
     attributes: {
@@ -46,7 +64,10 @@ function createDrawMask (regl, mesh) {
     },
     uniforms: {
       matcapTexture: regl.prop('matcapTexture'),
-      model: regl.context('headModel')
+      headModel: regl.prop('headModel'),
+      model: regl.prop('model'),
+      normalHeadModel: regl.prop('normalHeadModel'),
+      normalModel: regl.prop('normalModel'),
     },
     elements: quad.elementsFromQuads(regl, mesh, 'triangle'),
     primitive: 'triangle',
@@ -55,20 +76,20 @@ function createDrawMask (regl, mesh) {
 }
 
 function createMesh () {
+  let radius = 0.015
   // Create a box.
   const w = 0.25
   const h = 0.3
   const d = 0.05
   let mesh = quad.createBox(w, h, d)
-  mesh.positions.forEach(p => {
-    p[1] -= 0.07
-  })
+  mesh.positions.forEach(p => p[1] -= 0.07)
 
   quad.splitLoop(mesh, mesh.cells[3], 0.2, true)
   // Split the box in half.
-  quad.splitLoop(mesh, mesh.cells[3], 0.6)
-  quad.splitLoop(mesh, mesh.cells[3], 0.75)
-
+  const centerRing = quad.getNewGeometry(mesh, "positions", () => {
+    quad.splitLoop(mesh, mesh.cells[3], 0.6)
+    quad.splitLoop(mesh, mesh.cells[3], 0.75)
+  })
   createEyeHoles(mesh, w, h, d)
   bendMask(mesh, 0.5)
   shearMask(mesh, 0.2)
@@ -78,6 +99,26 @@ function createMesh () {
 
   quad.subdivide(mesh, 3)
 
+  return mesh
+  // Adjust nose shape.
+  centerRing.forEach(p => {
+    p[2] += 0.1
+    if (p[1] < 0) {
+      p[2] += 0.1
+    }
+  })
+  shapeEyes(mesh)
+  shapeMaskBack(mesh)
+  refineEyes(mesh)
+  shapeNose(mesh)
+
+  prepareAntlerMount(mesh, mesh.cells[23], -1)
+  createAntler(mesh, mesh.cells[23], radius, 1)
+
+  prepareAntlerMount(mesh, mesh.cells[0])
+  createAntler(mesh, mesh.cells[0], radius, -1)
+
+  quad.subdivide(mesh, 2)
   return mesh
 }
 
@@ -104,7 +145,7 @@ function createAntler (mesh, tipCell, radius, direction) {
   let branchRotation = 0.3
   let shrinkage = 0.1
 
-  const antlerPositions = quad.getNewGeometry(mesh, 'positions', () => {
+  const antlerPositions = quad.getNewGeometry(mesh, "positions", () => {
     createAntlerSection(mesh, tipCell, radius, length, branch, branchRotation, shrinkage)
 
     for (let i = 0; i < 7; i++) {
@@ -135,7 +176,7 @@ function createAntler (mesh, tipCell, radius, direction) {
 function createAntlerSection (mesh, tipCell, radius, length, branch, branchRotation, shrinkage) {
   // Make the initial extrusion
   quad.extrude(mesh, tipCell, shrinkage, length)
-  const branchCells = quad.getNewGeometry(mesh, 'cells', () => {
+  const branchCells = quad.getNewGeometry(mesh, "cells", () => {
     quad.extrude(mesh, tipCell, 0, length / 4)
   })
   quad.extrude(mesh, tipCell, 0, length / 2)
@@ -176,6 +217,17 @@ function applyRotationMatrixFromPoint (position, rotationMatrix, center) {
   return position
 }
 
+function shapeEyes (mesh) {
+  ;[27, 19, 20, 28].forEach(i => {
+    mesh.positions[i][0] *= 0.2
+    mesh.positions[i][1] -= 0.07
+  })
+
+  // Make eyes not quite so large
+  ;[33, 29].forEach(i => mesh.cells[i].forEach(pI => mesh.positions[pI][1] -= 0.03))
+  ;[31, 27].forEach(i => mesh.cells[i].forEach(pI => mesh.positions[pI][1] += 0.03))
+}
+
 function bendMask ({positions}, amount) {
   const xs = positions.map(([x, y, z]) => x)
   const minX = xs.reduce((a, b) => Math.min(a, b))
@@ -184,6 +236,14 @@ function bendMask ({positions}, amount) {
   const bendAmount = xRange * amount
   positions.forEach(p => {
     p[2] += Math.cos(p[0] * Math.PI / xRange) * bendAmount - bendAmount * 0.5
+  })
+}
+
+function shapeMaskBack (mesh) {
+  ;[0, 3].forEach(i => {
+    mesh.positions[i][0] *= 1.2
+    mesh.positions[i][1] -= 0.1
+    mesh.positions[i][2] -= 0.1
   })
 }
 
@@ -206,18 +266,110 @@ function createEyeHoles (mesh, w, h, d) {
   quad.extrude(mesh, leftEyeFront, 0, 0)
   quad.extrude(mesh, rightEyeFront, 0, 0)
 
-  leftEyeFront.forEach(i => {
-    mesh.positions[i][2] = -d / 2
-  })
-  rightEyeFront.forEach(i => {
-    mesh.positions[i][2] = -d / 2
-  })
+  leftEyeFront.forEach(i => mesh.positions[i][2] = -d / 2)
+  rightEyeFront.forEach(i => mesh.positions[i][2] = -d / 2)
 
   mesh.cells.splice(leftEyeBackIndex, 1)
   mesh.cells.splice(leftEyeFrontIndex, 1)
   mesh.cells.splice(rightEyeBackIndex, 1)
   mesh.cells.splice(11, 1)
   quad.mergePositions(mesh)
+}
+
+function refineEyes (mesh, cellIndex) {
+  quad.subdivide(mesh, 1)
+  ;[[48, true], [75, false]].forEach(([cellIndex, opposite]) => {
+    const cell = mesh.cells[cellIndex]
+    quad.insetLoop(mesh, cell, 0.05, opposite)
+
+    const ring = quad.getNewGeometry(mesh, "positions", () => {
+      quad.insetLoop(mesh, cell, 0.00, opposite)
+      quad.insetLoop(mesh, cell, 0.05, opposite)
+    })
+
+    quad.getLoop(mesh, mesh.cells[146], 'cells')
+      .reduce((a, b) => a.concat(b))
+      .map(i => mesh.positions[i])
+      .concat(ring)
+      .filter(unique)
+      .forEach(p => p[2] += 0.01)
+  })
+}
+
+function shapeNose (mesh) {
+  ;[42, 43, 46].forEach(i => {
+    mesh.positions[i][2] -= 0.05
+  })
+
+  quad.splitLoop(mesh, mesh.cells[25], 0.2, true)
+
+  ;[230, 231, 232].forEach(i => {
+    mesh.positions[i][0] *= 2
+    mesh.positions[i][1] += 0.05
+    mesh.positions[i][2] += 0.05
+  })
+}
+
+function extrudeHair (mesh) {
+  // Adjust top rim sizing of the mask
+  // Top row back
+  mesh.positions[53][2] -= 0.028
+  mesh.positions[51][2] -= 0.028
+  mesh.positions[7][2] -= 0.015
+  mesh.positions[37][2] -= 0.015
+
+  mesh.positions[7][1] += 0.015
+  mesh.positions[37][1] += 0.015
+
+  // Bottom Row back
+  mesh.positions[36][2] -= 0.03
+  mesh.positions[51][2] -= 0.03
+  mesh.positions[8][2] -= 0.03
+  quad.computeNormals(mesh)
+
+  quad.splitLoop(mesh, mesh.cells[10], 0.5, true)
+  quad.splitLoop(mesh, mesh.cells[9], 0.5)
+  quad.splitLoop(mesh, mesh.cells[13], 0.5)
+  quad.splitLoop(mesh, mesh.cells[14], 0.5, true)
+
+  // return
+  // const cells = [0, 3, 36, 39, 20, 23].map(i => mesh.cells[i])
+  const random = createRandom(11)
+  const cells = quad
+    .getLoop(mesh, mesh.cells[0], 'cells', true)
+    .filter(unique)
+    .filter(cell => (
+      mesh.positions[cell[0]][1] +
+      mesh.positions[cell[1]][1] +
+      mesh.positions[cell[2]][1] +
+      mesh.positions[cell[3]][1] > -0.4
+    ))
+
+  cells.forEach(cell => extrudeAndRotateCell(mesh, cell, random))
+  cells.forEach(cell => quad.extrude(mesh, cell, 0.1, 0.005))
+  cells.forEach(cell => extrudeAndRotateCell(mesh, cell, random))
+  cells.forEach(cell => quad.extrude(mesh, cell, 0.25, 0.025))
+  cells.forEach(cell => extrudeAndRotateCell(mesh, cell, random))
+  cells.forEach(cell => quad.extrude(mesh, cell, 0.25, 0.025))
+  cells.forEach(cell => extrudeAndRotateCell(mesh, cell, random))
+}
+
+function extrudeAndRotateCell (mesh, cell, random) {
+  quad.extrude(mesh, cell, 0.5, 0.025)
+  const range = 0.4
+  const rotateA = random() * range - range / 2
+  const rotateB = random() * range - range / 2
+
+  cell.forEach(i => {
+    const position = mesh.positions[i]
+    vec3.rotateZ(position, position, [0, 0, 0], rotateA)
+    vec3.rotateY(position, position, [0, 0, 0], rotateB)
+    position[2] -= 0.1
+  })
+}
+
+function unique(value, index, self) {
+  return self.indexOf(value) === index
 }
 
 function extrudeMouth (mesh) {
@@ -232,7 +384,9 @@ function extrudeMouth (mesh) {
     mesh.positions[i][2] += 0.05
   })
 
+  const center = quad.computeCellCenter(mesh, mouthCell)
   mouthPositions.forEach(position => {
+    // vec3.rotateX(position, position, center, -TAU * 0.1)
     position[1] -= 0.1
   })
 
@@ -247,12 +401,11 @@ function extrudeMouth (mesh) {
   })
 
   // quad.subdivide(mesh, 1)
+
 }
 
 function shearMask (mesh, amount) {
-  mesh.positions.forEach(p => {
-    p[2] -= p[1] * amount
-  })
+  mesh.positions.forEach(p => p[2] -= p[1] * amount)
 }
 
 function generateBothAntlers (mesh, radius) {
@@ -261,14 +414,14 @@ function generateBothAntlers (mesh, radius) {
   const leftCenter = quad.computeCellCenter(mesh, leftCell)
   const rightCenter = quad.computeCellCenter(mesh, rightCell)
 
-  const leftAntlers = quad.getNewGeometry(mesh, 'positions', () => {
+  const leftAntlers = quad.getNewGeometry(mesh, "positions", () => {
     squareCell(mesh, leftCell, 0.03, -1)
     quad.extrude(mesh, leftCell, 0.5, 0.01)
     quad.extrude(mesh, leftCell, 0.2, 0.001)
     createAntler(mesh, leftCell, radius, -1)
   })
 
-  const rightAntlers = quad.getNewGeometry(mesh, 'positions', () => {
+  const rightAntlers = quad.getNewGeometry(mesh, "positions", () => {
     squareCell(mesh, rightCell, 0.03, -1)
     quad.extrude(mesh, rightCell, 0.5, 0.01)
     quad.extrude(mesh, rightCell, 0.2, 0.001)
@@ -280,22 +433,8 @@ function generateBothAntlers (mesh, radius) {
 }
 
 function sizeAntlers (mesh, positions, center, direction) {
-  const ys = positions.map(p => p[1])
-  const maxY = ys.reduce((a, b) => Math.max(a, b))
-  const minY = ys.reduce((a, b) => Math.min(a, b))
-  const rangeY = maxY - minY
-
   positions.forEach(position => {
-    const unitY = (position[1] - minY) / rangeY
     vec3.rotateZ(position, position, center, 0.3 * direction)
-    vec3.rotateX(position, position, center, -0.3 * (1 - unitY))
-    position[2] += -0.02
-    scaleFromPoint(position, center, 2)
+    vec3.scale(position, position, 2)
   })
-}
-
-function scaleFromPoint (point, center, scale) {
-  point[0] = (point[0] - center[0]) * scale + center[0]
-  point[1] = (point[1] - center[1]) * scale + center[1]
-  point[2] = (point[2] - center[2]) * scale + center[2]
 }

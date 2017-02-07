@@ -3,11 +3,11 @@ const mat3 = require('gl-mat3')
 const mat4 = require('gl-mat4')
 const createControls = require('orbit-controls')
 const createCamera = require('perspective-camera')
-const simplex = new (require('simplex-noise'))()
 
 const TAU = 6.283185307179586
 const FOV = TAU * 0.1
 const ORIGIN = [0, 0, 0]
+const THETA = 0.3
 
 module.exports = function (regl) {
   const camera = createCamera({
@@ -18,14 +18,15 @@ module.exports = function (regl) {
   })
 
   const controls = createControls({
-    phi: Math.PI * 0.4,
-    theta: 0.2,
-    distanceBounds: [0.5, 1.5],
-    phiBounds: [Math.PI * 0.2, Math.PI * 0.8],
+    phi: Math.PI * 0.5,
+    theta: THETA,
+    distanceBounds: [0.75, 1.25],
+    phiBounds: [Math.PI * 0.5, Math.PI * 0.5],
+    thetaBounds: [THETA - 1, THETA + 1],
     zoomSpeed: 0.0001,
     pinchSpeed: 0.0001,
-    rotateSpeed: 0.025,
-    damping: 0.1,
+    rotateSpeed: 0.0025,
+    damping: 0.01,
     parent: regl._gl.canvas,
     element: regl._gl.canvas
   })
@@ -55,8 +56,8 @@ module.exports = function (regl) {
       projView: () => camera.projView,
       inverseProjection: () => mat4.invert([], camera.projection),
       inverseView: () => mat4.invert([], camera.view),
-      viewNormal: withArrays(1, ([out]) => mat3.normalFromMat4(out, camera.view)),
-      projectionViewNormal: withArrays(1, ([out]) => mat3.normalFromMat4(out, camera.projView)),
+      normalView: withArrays(1, ([out]) => mat3.normalFromMat4(out, camera.view)),
+      projectioninverseView: withArrays(1, ([out]) => mat3.normalFromMat4(out, camera.projView)),
       light0: vec3.normalize([], [0, 1, 0.1]),
       light1: vec3.normalize([], [0.5, -1, 0.5]),
       light2: vec3.normalize([], [-0.5, 0.2, 0.8]),
@@ -67,22 +68,7 @@ module.exports = function (regl) {
       cameraPosition: () => camera.position
     },
     context: {
-      fov: FOV,
-      headModel: (() => {
-        const out = []
-        const eye = [0, 0, -1]
-        const center = [0, 0, 0]
-        const up = [0, 1, 0]
-        return ({time}) => {
-          center[0] = simplex.noise2D(time * 0.1, 0) * 0.05
-          center[1] = simplex.noise2D(time * 0.1, 10) * 0.025
-          up[0] = simplex.noise2D(time * 0.1, 10) * 0.25
-
-          eye[0] = simplex.noise2D(time * 0.05, 0) * 0.25
-          // return mat4.identity(out)
-          return mat4.lookAt(out, center, eye, up)
-        }
-      })()
+      fov: FOV
     }
   })
 }

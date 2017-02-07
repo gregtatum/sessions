@@ -30,7 +30,7 @@ module.exports = function (regl) {
           min(1.0, 0.5 + 0.5 * dot(direction, vec3(0.0, 1.0, 0.0)))
         );
 
-        vec3 baseColor = vec3(0.35, 0.85, 0.8);
+        vec3 baseColor = 0.3 * vec3(0.35, 0.85, 0.8);
         float vignette = 1.0 - pow(length(vUv * 0.5), 2.0);
         float noise = mix(1.5, 1.7, snoise3(vec3(direction.xz * 7.0, time * 0.5)));
 

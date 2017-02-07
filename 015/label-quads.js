@@ -76,7 +76,7 @@ function createDrawNumbers (regl) {
       varying vec3 vDigits;
       void main() {
         vDigits = digits;
-        gl_Position = projection * view * vec4(position, 1.0);
+        gl_Position = projection * view * model * vec4(position, 1.0);
         gl_PointSize = viewportHeight * fontHeight;
       }
     `,
@@ -128,7 +128,8 @@ function createDrawNumbers (regl) {
     `,
     uniforms: {
       viewportHeight: regl.context('viewportHeight'),
-      numbersTexture: regl.texture(createTexture())
+      numbersTexture: regl.texture(createTexture()),
+      model: (_, props) => (props && props.model) ? props.model : identity
     },
     primitive: 'points',
     depth: { enable: false },
@@ -159,12 +160,13 @@ function createDrawCellIndices (regl, quads, drawNumbers) {
     },
     uniforms: {
       fontHeight: (_, props) => (props && props.height) ? height : CELL_FONT_SIZE,
-      color: (_, props) => (props && props.color) ? props.color : CELL_COLOR
+      color: (_, props) => (props && props.color) ? props.color : CELL_COLOR,
+      model: (_, props) => (props && props.model) ? props.model : identity
     },
     count: centerPositions.length
   })
 
-  return () => drawNumbers(drawCells)
+  return (props) => drawNumbers(() => drawCells(props))
 }
 
 function createDrawPositionIndices (regl, quads, drawNumbers) {
@@ -178,12 +180,13 @@ function createDrawPositionIndices (regl, quads, drawNumbers) {
     },
     uniforms: {
       fontHeight: (_, props) => (props && props.height) ? props.height : POSITION_FONT_SIZE,
-      color: (_, props) => (props && props.color) ? props.color : POSITION_COLOR
+      color: (_, props) => (props && props.color) ? props.color : POSITION_COLOR,
+      model: (_, props) => (props && props.model) ? props.model : identity
     },
     count: positions.length
   })
 
-  return () => drawNumbers(drawPositions)
+  return (props) => drawNumbers(() => drawPositions(props))
 }
 
 function toDigits (centers) {
