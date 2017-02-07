@@ -3,7 +3,7 @@ const vec3 = require('gl-vec3')
 const quad = require('../common/quads')
 const createRandom = require('@tatumcreative/random')
 
-module.exports = function(regl) {
+module.exports = function (regl) {
   const quads = createGeometry()
   return {
     maskBodyQuads: quads,

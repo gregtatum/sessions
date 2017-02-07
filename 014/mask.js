@@ -62,7 +62,7 @@ function createGeometry () {
   let quads = quad.createBox(w, h, d)
 
   // Split the box in half.
-  const centerRing = quad.getNewGeometry(quads, "positions", () => {
+  const centerRing = quad.getNewGeometry(quads, 'positions', () => {
     quad.splitLoop(quads, quads.cells[3], 0.6)
     quad.splitLoop(quads, quads.cells[3], 0.75)
   })
@@ -132,7 +132,7 @@ function refineEyes (quads, cellIndex) {
     const cell = quads.cells[cellIndex]
     quad.insetLoop(quads, cell, 0.05, opposite)
 
-    const ring = quad.getNewGeometry(quads, "positions", () => {
+    const ring = quad.getNewGeometry(quads, 'positions', () => {
       quad.insetLoop(quads, cell, 0.00, opposite)
       quad.insetLoop(quads, cell, 0.05, opposite)
     })
@@ -218,6 +218,6 @@ function extrudeAndRotateCell (quads, cell, random) {
   })
 }
 
-function unique(value, index, self) {
+function unique (value, index, self) {
   return self.indexOf(value) === index
 }

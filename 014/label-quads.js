@@ -14,7 +14,7 @@ module.exports = function (regl, quads) {
     return {
       drawLines: NOOP,
       drawCellIndices: NOOP,
-      drawPositionIndicies: NOOP,
+      drawPositionIndicies: NOOP
     }
   }
   const drawNumbers = createDrawNumbers(regl)
@@ -53,7 +53,7 @@ function createDrawLines (regl, quads) {
     `,
     attributes: {
       position: quads.positions,
-      normal: quads.normals,
+      normal: quads.normals
     },
     uniforms: {
       model: (_, props) => (props && props.model) ? props.model : identity
@@ -128,7 +128,7 @@ function createDrawNumbers (regl) {
     `,
     uniforms: {
       viewportHeight: regl.context('viewportHeight'),
-      numbersTexture: regl.texture(createTexture()),
+      numbersTexture: regl.texture(createTexture())
     },
     primitive: 'points',
     depth: { enable: false },
@@ -144,7 +144,7 @@ function createDrawNumbers (regl) {
         rgb: 'add',
         alpha: 'add'
       }
-    },
+    }
   })
 }
 
@@ -161,7 +161,7 @@ function createDrawCellIndices (regl, quads, drawNumbers) {
       fontHeight: (_, props) => (props && props.height) ? height : CELL_FONT_SIZE,
       color: (_, props) => (props && props.color) ? props.color : CELL_COLOR
     },
-    count: centerPositions.length,
+    count: centerPositions.length
   })
 
   return () => drawNumbers(drawCells)
@@ -180,7 +180,7 @@ function createDrawPositionIndices (regl, quads, drawNumbers) {
       fontHeight: (_, props) => (props && props.height) ? props.height : POSITION_FONT_SIZE,
       color: (_, props) => (props && props.color) ? props.color : POSITION_COLOR
     },
-    count: positions.length,
+    count: positions.length
   })
 
   return () => drawNumbers(drawPositions)
@@ -194,7 +194,7 @@ function toDigits (centers) {
   return centers.map((_, cellIndex) => {
     let sum = 0
     let digits = []
-    for (let i = 2;  i >= 0; i--) {
+    for (let i = 2; i >= 0; i--) {
       const zeros = Math.pow(10, i)
       const n = Math.floor((cellIndex - sum) / zeros)
       sum += n * zeros
