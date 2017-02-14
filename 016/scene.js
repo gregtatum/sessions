@@ -23,10 +23,10 @@ module.exports = function (regl) {
     distanceBounds: [0.75, 1.25],
     // phiBounds: [Math.PI * 0.5, Math.PI * 0.5],
     // thetaBounds: [THETA - 0.2, THETA + 0.2],
-    zoomSpeed: 0.005,
-    pinchSpeed: 0.005,
-    rotateSpeed: 0.05,
-    damping: 0.1,
+    zoomSpeed: 0.005 * 0,
+    pinchSpeed: 0.005 * 0,
+    rotateSpeed: 0.001,
+    damping: 0.01,
     parent: regl._gl.canvas,
     element: regl._gl.canvas
   })

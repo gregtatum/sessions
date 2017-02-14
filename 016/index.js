@@ -7,6 +7,7 @@ const drawDiscFlorets = require('./disc-florets')(regl)
 const drawRayFlorets = require('./ray-florets')(regl)
 const drawStem = require('./stem')(regl)
 const drawBackground = require('./background')(regl)
+const drawDust = require('./dust')(regl)
 
 resl({
   manifest: {
@@ -32,6 +33,7 @@ resl({
             drawStem(assets)
           })
           drawBackground()
+          drawDust()
         })
         window.frameDone()
       } catch (error) {

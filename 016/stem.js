@@ -26,8 +26,9 @@ function createMesh () {
 
   // Extrude down.
   quad.extrude(mesh, mesh.cells[1], 0.8, 0.025)
-  quad.extrude(mesh, mesh.cells[1], 0.0, 0.1)
-  quad.extrude(mesh, mesh.cells[1], 0.0, 0.3)
+  quad.extrude(mesh, mesh.cells[1], 0.0, 0.05)
+  quad.extrude(mesh, mesh.cells[1], 0.0, 0.05)
+  quad.extrude(mesh, mesh.cells[1], 0.0, 0.05)
 
   // Extrude top inset.
   quad.extrude(mesh, mesh.cells[0], 0.5, -0.005)

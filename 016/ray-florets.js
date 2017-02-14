@@ -28,7 +28,6 @@ const JITTER_H = 0.0
 const JITTER_D = 0.1
 const JITTER_UP = 0.02
 
-
 module.exports = function rayFlorets (regl) {
   const mesh = createMesh()
   const drawRayFlorets = createDrawRayFlorets(regl, mesh)
