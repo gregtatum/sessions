@@ -54,6 +54,8 @@ module.exports = function (regl) {
       projection: update(() => camera.projection),
       view: () => camera.view,
       projView: () => camera.projView,
+      inverseProjection: () => mat4.invert([], camera.projection),
+      normalProjView: () => mat3.normalFromMat4([], camera.projView),
       inverseView: withArrays(1, ([out]) => mat4.invert([], camera.view)),
       normalView: withArrays(1, ([out]) => mat3.normalFromMat4(out, camera.view)),
       light0: vec3.normalize([], [0, 1, 0.1]),

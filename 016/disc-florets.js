@@ -39,7 +39,6 @@ function createMesh () {
   // Setup some base transform for the first floret.
   mesh.positions.forEach(p => {
     const unitW = p[0] * (1 / FLORET_W)
-    console.log(unitW)
     p[2] *= lerp(FLORET_TAPER, 1, unitW)
     vec3.rotateX(p, p, origin, FLORET_ROTATE_X)
     // vec3.rotateZ(p, p, origin, FLORET_ROTATE_Z)
@@ -77,47 +76,15 @@ function spiralFloret (mesh, baseCells) {
 
 function createDrawDiscFlorets (regl, mesh) {
   return regl({
-    vert: glsl`
-      precision mediump float;
-      attribute vec3 normal, position;
-      uniform mat4 model, view, projection, projView;
-      uniform mat3 normalModel, normalView;
-      uniform vec3 cameraPosition;
-      varying vec3 vNormal, vCameraVector;
-
-      void main() {
-        vNormal = normalView * normalModel * normal;
-        vCameraVector = normalView * (position.xyz - cameraPosition);
-
-        gl_Position = projView * vec4(position, 1.0);
-      }
-    `,
-    frag: glsl`
-      precision mediump float;
-      #pragma glslify: matcap = require(matcap)
-      uniform sampler2D matcapTexture;
-      varying vec3 vNormal, vCameraVector;
-
-      void main() {
-        vec2 uv = matcap(
-          normalize(vCameraVector),
-          normalize(vNormal)
-        );
-
-        vec3 color = texture2D(matcapTexture, uv).rgb;
-        gl_FragColor = vec4(color, 1.0);
-      }
-    `,
     attributes: {
       position: mesh.positions,
       normal: mesh.normals,
     },
     uniforms: {
-      model: mat4.identity([]),
-      normalModel: mat3.identity([]),
-      matcapTexture: regl.prop('matcapTexture')
+      hueShiftAmount: 0.9,
+      edgeGlow: 0.4,
+      brightness: 1.0
     },
     elements: quad.elementsFromQuads(regl, mesh, 'triangle'),
-    cull: { enable: true }
   })
 }
