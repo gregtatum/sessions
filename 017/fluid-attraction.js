@@ -4,15 +4,15 @@ const simplex = new (require('simplex-noise'))()
 const random = require('random-spherical/array')()
 const createPlane = require('primitive-plane')
 
-const RADIUS = 256
+const RADIUS = 128
 const COUNT = RADIUS * RADIUS
 const MODEL_SCALE = 1
 const ROTATE_SPEED = 0.0
 const PASS_DIVISOR = 32
-const POINT_RADIUS = 0.3
+const POINT_RADIUS = 0.03
 const INITIAL_SPEED = -POINT_RADIUS / 100
 const PARTICLE_UP = 0.2;
-const REFLECTION_DAMPING = 0.6
+const REFLECTION_DAMPING = 0.5
 const GROUND_OFFSET = `vec3(0.0, 0.2, 0.2)`;
 const POINT_SIZE = '5.0'
 const GROUND_FN = name => `
@@ -25,9 +25,12 @@ const GROUND_DFDZ = name => `2.0 * ${name}.z`
 
 module.exports = function (regl) {
   const initialPositions = Array(COUNT).fill().map((n, i) => {
-    const point = random(Math.sqrt(Math.random()) * POINT_RADIUS)
-    point[1] += 0.1
-    point[2] += 0.2
+    const unitI = i / COUNT
+    return [
+      0.4 * simplex.noise2D(unitI * 10, 0),
+      0.4 * unitI - 0.2,
+      0.4 * simplex.noise2D(unitI * 10, 100)
+    ]
     return point
   })
   const state = Array(3).fill().map((n, pass) => (
@@ -72,7 +75,38 @@ module.exports = function (regl) {
       varying vec2 uv;
 
       float PI = ${Math.PI};
+      float TWOPI = ${Math.PI * 2};
+      float ONEPOINTFIVEPI = ${Math.PI * 1.5};
 
+      float calculateAttractionRepulsion(float distance) {
+        // https://www.desmos.com/calculator/eftunfytpq
+        float repulsionDistance = 0.000005;
+        float repulsionForce = -0.00000;
+        float repulsionPower = 2.0;
+
+        float attractionDistance = 0.05;
+        float attractionForce = 0.000005;
+        float attractionPower = 2.82;
+
+        // Move the initial x value for the sin functions to create the proper arc.
+        float fx = min(2.0 * PI, max(0.0, PI * distance / attractionDistance));
+        float gx = min(2.0 * PI, max(PI, PI * distance / (2.0 * repulsionDistance) + 3.0 * PI / 2.0));
+
+        // Apply the cos functions, and shape them with power functions.
+        float f = attractionForce * pow(cos(fx + PI) * 0.5 + 0.5, attractionPower);
+        float g = repulsionForce - repulsionForce * pow(cos(gx + PI) * 0.5 + 0.5, repulsionPower);
+
+        return f;
+      }
+
+      float doFluidForce(vec3 r, float h) {
+        float lengthR = length(r);
+        if (lengthR < h) {
+          float scalar = 315.0 / (64.0 * PI * pow(h, 9.0));
+          return scalar * pow(h * h - lengthR * lengthR, 3.0);
+        }
+        return 0.0;
+      }
 
       void main() {
         vec3 prevPositionA = texture2D(prevState, uv).rgb;
@@ -83,7 +117,26 @@ module.exports = function (regl) {
 
         vec3 fluidForce = vec3(0.0);
 
-        vec3 velocity = deltaPositionA + vec3(0.0, -0.00005, 0.0);
+        for (float i = 0.0; i < ${COUNT}.0; i += ${PASS_DIVISOR}.0) {
+          float i2 = i + passStep;
+          vec2 uvB = vec2(
+            mod(i2, ${RADIUS}.0) / ${RADIUS}.0,
+            floor(i2 / ${RADIUS}.0) / ${RADIUS}.0
+          );
+          vec3 prevPositionB = texture2D(prevState, uvB).rgb;
+          vec3 currPositionB = texture2D(currState, uvB).rgb;
+          vec3 deltaPositionB = currPositionB - prevPositionB;
+          vec3 directionB = normalize(deltaPositionB);
+          float distanceB = length(deltaPositionB);
+
+          vec3 deltaBetween = currPositionB - currPositionA;
+          float distanceBetween = length(deltaBetween);
+          vec3 directionBetween = deltaBetween / distanceBetween;
+          fluidForce += directionBetween * calculateAttractionRepulsion(distanceBetween);
+        }
+
+        vec3 velocity = deltaPositionA // + vec3(0.0, -0.00005, 0.0)
+          + fluidForce;
         vec3 position = currPositionA + velocity;
 
         vec3 groundIn = position + ${GROUND_OFFSET};
@@ -136,16 +189,10 @@ module.exports = function (regl) {
       void main () {
         vec4 currPosition = texture2D(currState, coordinate);
         vec4 prevPosition = texture2D(prevState, coordinate);
-        // float speed = distance(currPosition, prevPosition);
-        float speed = (prevPosition.y - currPosition.y);
         currPosition.w = 1.0;
         gl_PointSize = ${POINT_SIZE};
         gl_Position = projView * model * currPosition;
-        vColor = mix(
-          vec3(0.3, 1.0, 0.7),
-          vec3(1.0, 0.3, 0.3),
-          clamp(speed * 500.0, 0.0, 1.0)
-        ) * mix(0.5, 1.0, mod(id, 10.0) * 0.1);
+        vColor = vec3(0.3, 1.0, 0.7) * mix(0.5, 1.0, mod(id, 10.0) * 0.1);
       }
     `,
     frag: glsl`

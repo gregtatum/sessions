@@ -13,7 +13,7 @@ module.exports = function dustDrawer (regl) {
       varying float speed, vParticleId;
       varying vec3 vColor;
 
-      float POINT_SIZE = 0.03;
+      float POINT_SIZE = 0.02;
       float POINT_SPEED = -0.012;
       float STAGE_SIZE = 1.3;
       float HALF_STAGE_SIZE = STAGE_SIZE * 0.5;
