@@ -32,6 +32,7 @@
     "glsl-map": "^1.0.1",
     "glsl-noise": "0.0.0",
     "glsl-range": "1.0.0",
+    "glsl-specular-cook-torrance": "2.0.1",
     "glsl-transpose": "1.0.0",
     "glsl-y-rotate": "2.0.0",
     "glslify": "6.0.1",
