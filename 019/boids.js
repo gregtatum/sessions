@@ -1,5 +1,6 @@
 const glsl = require('glslify')
 const mat4 = require('gl-mat4')
+const vec3 = require('gl-vec3')
 const simplex = new (require('simplex-noise'))()
 const random = require('random-spherical/array')()
 const createPlane = require('primitive-plane')
@@ -23,11 +24,12 @@ const GROUND_FN = name => `
 const GROUND_DFDX = name => `2.0 * ${name}.x`
 const GROUND_DFDZ = name => `2.0 * ${name}.z`
 
-module.exports = function (regl) {
+module.exports = function (regl, initialCenter) {
   const initialPositions = Array(COUNT).fill().map((n, i) => {
     const point = random(Math.sqrt(Math.random()) * POINT_RADIUS)
     return point
   })
+  console.log(initialCenter)
   const state = Array(3).fill().map((n, pass) => (
     regl.framebuffer({
       color: regl.texture({
@@ -37,9 +39,9 @@ module.exports = function (regl) {
           const target = []
           for (let i = 0; i < COUNT; i++) {
             const position = initialPositions[i]
-            buffer[i * 4 + 0] = position[0] + (Math.random() - 0.5) * 0.01
-            buffer[i * 4 + 1] = position[1] + pass * INITIAL_SPEED + PARTICLE_INITIAL_OFFSET_UP
-            buffer[i * 4 + 2] = position[2]
+            buffer[i * 4 + 0] = initialCenter[0] / MODEL_SCALE + position[0] + (Math.random() - 0.5) * 0.01
+            buffer[i * 4 + 1] = initialCenter[1] / MODEL_SCALE + position[1] + pass * INITIAL_SPEED + PARTICLE_INITIAL_OFFSET_UP
+            buffer[i * 4 + 2] = initialCenter[2] / MODEL_SCALE + position[2]
             buffer[i * 4 + 3] = 0
           }
           return buffer
@@ -83,11 +85,11 @@ module.exports = function (regl) {
       float MAX_STAGE_RADIUS = 1.8;
 
       // Weights
-      float ALIGNMENT_WEIGHT = 0.25;
-      float ADHESION_WEIGHT = 0.25;
-      float REPULSION_WEIGHT = 0.5;
+      float ALIGNMENT_WEIGHT = 0.25 * 0.0;
+      float ADHESION_WEIGHT = 0.25 * 0.0;
+      float REPULSION_WEIGHT = 0.5 * 0.0;
       float TO_TARGET_WEIGHT = 0.8;
-      float WANDER_WEIGHT = 0.0;
+      float WANDER_WEIGHT = 0.1;
       float ALIGNMENT_POWER = 1.5;
       float REPULSION_POWER = 2.0;
 
@@ -104,8 +106,8 @@ module.exports = function (regl) {
         toTarget *= range(STAGE_RADIUS, MAX_STAGE_RADIUS, min(MAX_STAGE_RADIUS, max(STAGE_RADIUS, distanceToTarget)));
 
         // Wandering forces.
-        float wanderTheta = TAU * snoise3(vec3(5.0 * uv, time * 0.5));
-        float wanderPhi = PI * 0.5 * snoise3(vec3(5.0 * uv, time * 0.5));
+        float wanderTheta = TAU * snoise3(vec3(1.0 * uv, time * 0.5));
+        float wanderPhi = PI * 0.5 * snoise3(vec3(1.0 * uv, time * 0.5));
         vec3 wander = vec3(
           sin(wanderTheta) * cos(wanderPhi),
           sin(wanderTheta) * sin(wanderPhi),
@@ -162,7 +164,7 @@ module.exports = function (regl) {
       passStep: ({tick}) => tick % 2,
       target: regl.context('time'),
       tick: regl.context('tick'),
-      target: regl.prop('target')
+      target: (_, {target}) => vec3.scale([], target, 1 / MODEL_SCALE)
     },
     depth: { enable: false },
     count: 3,

@@ -50,6 +50,9 @@ module.exports = function (regl) {
         // Calculate the direction up from the view.
         mat3.normalFromMat4(normalView, camera.view)
         vec3.transformMat3(upDirection, UP, normalView)
+        upDirection[0] = 0
+        upDirection[1] = 1
+        upDirection[2] = 0
 
         prevTick = tick
       }

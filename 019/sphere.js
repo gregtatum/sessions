@@ -56,6 +56,7 @@ module.exports = function createDrawSphere (regl) {
         [0.18, 0.18, 0.18]
       )
     },
-    elements: icosphere.cells
+    elements: icosphere.cells,
+    // primitive: 'lines'
   })
 }
