@@ -9,19 +9,23 @@ const pixels = regl.texture({
     const canvas = document.createElement('canvas')
     const ctx = canvas.getContext('2d')
     const { width, height } = regl._gl.canvas
+    const radius = Math.min(width, height) * 0.002
     canvas.width = width
     canvas.height = height
     ctx.fillStyle = '#ff0000'
-    ctx.fillRect(0, 0, width, height )
-    const radius = Math.min(width, height) * 0.03
-    for (let i = 0; i < 500; i++) {
-      let radius2 = radius * Math.random()
+    ctx.fillRect(
+      0,
+      0,
+      width,
+      height
+    )
+    for (let i = 0; i < 1000; i++) {
       ctx.fillStyle = '#00ff00'
       ctx.fillRect(
-        Math.random() * width - radius2,
-        Math.random() * height - radius2,
-        radius2 * 2,
-        radius2 * 2
+        Math.random() * width - radius,
+        Math.random() * height - radius,
+        radius * 2,
+        radius * 2
       )
     }
 
@@ -42,7 +46,7 @@ const drawReactionDiffusion = regl({
   frag: glsl`
     precision highp float;
     uniform sampler2D texture;
-    uniform float time, viewportWidth, viewportHeight, neighborX, neighborY;
+    uniform float time, viewportWidth, viewportHeight, viewportRatio, neighborX, neighborY;
     varying vec2 vUv;
 
     float DIFFUSION_RATE_A = 1.0;
@@ -73,10 +77,9 @@ const drawReactionDiffusion = regl({
       float laplacianA = -a + adjacentNeighbors.x + cornerNeighbors.x;
       float laplacianB = -b + adjacentNeighbors.y + cornerNeighbors.y;
       float reaction = a * b * b;
-      float feedRateSpread = mix(0.005, -0.005, length(vUv - 0.5) * 2.0);
+      float feedRateSpread = mix(0.005, -0.005, length(vec2(1.0, viewportRatio) * (vUv - 0.5)) * 2.0);
       float feed = (FEED_RATE + feedRateSpread) * (1.0 - a);
-      float killRateSpread = mix(0.01, -0.01, vUv.y);
-      float kill = (KILL_RATE + killRateSpread + FEED_RATE) * b;
+      float kill = (KILL_RATE + FEED_RATE) * b;
       gl_FragColor = vec4(
         0.001 + a + (DIFFUSION_RATE_A * laplacianA - reaction + feed) * TIME_SCALE,
         b + (DIFFUSION_RATE_B * laplacianB + reaction - kill) * TIME_SCALE,
@@ -96,6 +99,7 @@ const drawReactionDiffusion = regl({
     time: ({tick}) => 0.001 * tick,
     viewportWidth: regl.context('viewportWidth'),
     viewportHeight: regl.context('viewportHeight'),
+    viewportRatio: ({viewportWidth, viewportHeight}) => viewportHeight / viewportWidth,
     neighborX: ({viewportWidth}) => 1 / viewportWidth,
     neighborY: ({viewportHeight}) => 1 / viewportHeight,
   },
