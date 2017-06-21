@@ -9,23 +9,19 @@ const pixels = regl.texture({
     const canvas = document.createElement('canvas')
     const ctx = canvas.getContext('2d')
     const { width, height } = regl._gl.canvas
-    const radius = Math.min(width, height) * 0.01
     canvas.width = width
     canvas.height = height
     ctx.fillStyle = '#ff0000'
-    ctx.fillRect(
-      0,
-      0,
-      width,
-      height
-    )
-    for (let i = 0; i < 1000; i++) {
+    ctx.fillRect(0, 0, width, height )
+    const radius = Math.min(width, height) * 0.03
+    for (let i = 0; i < 500; i++) {
+      let radius2 = radius * Math.random()
       ctx.fillStyle = '#00ff00'
       ctx.fillRect(
-        Math.random() * width - radius,
-        Math.random() * height - radius,
-        radius * 2,
-        radius * 2
+        Math.random() * width - radius2,
+        Math.random() * height - radius2,
+        radius2 * 2,
+        radius2 * 2
       )
     }
 
@@ -52,7 +48,7 @@ const drawReactionDiffusion = regl({
     float DIFFUSION_RATE_A = 1.0;
     float DIFFUSION_RATE_B = 0.5;
     float FEED_RATE = 0.055;
-    float KILL_RATE = 0.062;
+    float KILL_RATE = 0.064;
     // float FEED_RATE = 0.0367;
     // float KILL_RATE = 0.0649;
     float TIME_SCALE = 1.0;
@@ -74,16 +70,16 @@ const drawReactionDiffusion = regl({
         texture2D(texture, vUv + vec2(-neighborX, neighborY))
       );
 
-      vec2 toCenter = 0.002 * (vUv - 0.5);
-
       float laplacianA = -a + adjacentNeighbors.x + cornerNeighbors.x;
       float laplacianB = -b + adjacentNeighbors.y + cornerNeighbors.y;
       float reaction = a * b * b;
-      float feed = FEED_RATE * (1.0 - a);
-      float kill = (KILL_RATE + FEED_RATE) * b;
+      float feedRateSpread = mix(0.005, -0.005, length(vUv - 0.5) * 2.0);
+      float feed = (FEED_RATE + feedRateSpread) * (1.0 - a);
+      float killRateSpread = mix(0.01, -0.01, vUv.y);
+      float kill = (KILL_RATE + killRateSpread + FEED_RATE) * b;
       gl_FragColor = vec4(
-        toCenter.x + a + (DIFFUSION_RATE_A * laplacianA - reaction + feed) * TIME_SCALE,
-        toCenter.y + b + (DIFFUSION_RATE_B * laplacianB + reaction - kill) * TIME_SCALE,
+        0.001 + a + (DIFFUSION_RATE_A * laplacianA - reaction + feed) * TIME_SCALE,
+        b + (DIFFUSION_RATE_B * laplacianB + reaction - kill) * TIME_SCALE,
         0.0,
         1.0
       );
@@ -135,7 +131,8 @@ const copyTexture = regl({
     position: [
       -2, 0,
       0, -2,
-      2, 2]
+      2, 2
+    ]
   },
   uniforms: {
     texture: pixels,
