@@ -2,7 +2,6 @@ const glsl = require('glslify')
 
 module.exports = function createInitialTexture(regl, withFullScreenQuad) {
   const texture = regl.texture({
-    type: 'float',
     data: (() => {
       const canvas = document.createElement('canvas')
       const ctx = canvas.getContext('2d')
@@ -32,7 +31,6 @@ module.exports = function createInitialTexture(regl, withFullScreenQuad) {
 
   const frameBuffer = regl.framebuffer({
     color: regl.texture({ wrap: 'clamp' }),
-    type: 'float',
     depth: false
   })
 

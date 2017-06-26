@@ -4,8 +4,7 @@ module.exports = function createDrawReactionDiffusion (regl, texture) {
   return regl({
     frag: glsl`
       precision mediump float;
-      #pragma glslify: matcap = require(matcap)
-      uniform sampler2D texture, matcapTexture;
+      uniform sampler2D texture;
       varying vec2 vUv;
       uniform float neighborX, neighborY, viewportWidth, viewportHeight, time;
 
@@ -40,18 +39,12 @@ module.exports = function createDrawReactionDiffusion (regl, texture) {
         ));
       }
 
-      vec3 getTexture(vec3 normalIn) {
-        vec2 uv = matcap(vec3(0.0, 1.0, 0.0), normalIn);
-        return texture2D(matcapTexture, uv).rgb;
-      }
-
       void main () {
         vec4 particles = texture2D(texture, vUv);
         float a = particles.x;
         float b = particles.y;
         vec3 position = getPosition(vUv);
         vec3 normal = getNormal(position, vUv);
-        // vec3 color = getTexture(normal);
         float brightness = 1.0 - 0.5 * (1.0 + dot(normal, vec3(0.0, 1.0, 0.0)));
         vec3 color = vec3(brightness) * 0.5
           + (1.0 - a) * vec3(1.0, 0.5, 0.0)
@@ -65,7 +58,6 @@ module.exports = function createDrawReactionDiffusion (regl, texture) {
       viewportWidth: regl.context('viewportWidth'),
       viewportHeight: regl.context('viewportHeight'),
       viewportRatio: ({viewportWidth, viewportHeight}) => viewportHeight / viewportWidth,
-      matcapTexture: regl.prop('matcapTexture'),
       neighborX: ({viewportWidth}) => 1 / viewportWidth,
       neighborY: ({viewportHeight}) => 1 / viewportHeight,
     },
