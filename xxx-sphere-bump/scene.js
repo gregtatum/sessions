@@ -3,6 +3,7 @@ const mat3 = require('gl-mat3')
 const mat4 = require('gl-mat4')
 const createControls = require('orbit-controls')
 const createCamera = require('perspective-camera')
+const simplex = new (require('simplex-noise'))()
 
 const TAU = 6.283185307179586
 const FOV = TAU * 0.1
@@ -18,9 +19,10 @@ module.exports = function (regl) {
 
   const controls = createControls({
     phi: TAU * 0.2,
-    theta: 0.2,
+    theta: 0.0,
     distanceBounds: [0.5, 1.5],
-    phiBounds: [Math.PI * 0.3, Math.PI * 0.7],
+    phiBounds: [Math.PI * 0.4, Math.PI * 0.6],
+    thetaBounds: [Math.PI * -0.12, Math.PI * 0.12],
     zoomSpeed: 0,
     pinchSpeed: 0,
     rotateSpeed: 0.01,
@@ -31,15 +33,28 @@ module.exports = function (regl) {
 
   camera.update()
 
+  const cameraPositionNoise = [0, 0, 0]
+  const cameraDirectionNoise = [0, 0, 0]
+  const cameraNoiseSize = 0.03
+
   let prevTick
   function update (callback) {
     return ({time, tick, viewportWidth, viewportHeight}) => {
       if (tick !== prevTick) {
-        vec3.rotateY(controls.position, controls.position, ORIGIN, 0.001)
+        // vec3.rotateY(controls.position, controls.position, ORIGIN, 0.001)
         controls.update()
         controls.copyInto(camera.position, camera.direction, camera.up)
         camera.viewport[2] = viewportWidth
         camera.viewport[3] = viewportHeight
+        cameraPositionNoise[0] = cameraNoiseSize * simplex.noise2D(time * 0.15, 0)
+        cameraPositionNoise[1] = cameraNoiseSize * simplex.noise2D(0, time * 0.15)
+        cameraPositionNoise[2] = cameraNoiseSize * simplex.noise2D(100, time * 0.15)
+        cameraDirectionNoise[0] = 0.04 * simplex.noise2D(time * 0.13, -100)
+        vec3.add(camera.position, camera.position, cameraPositionNoise)
+        vec3.normalize(camera.direction,
+          vec3.add(camera.direction, camera.direction, cameraDirectionNoise)
+        )
+
         camera.update()
         prevTick = tick
       }

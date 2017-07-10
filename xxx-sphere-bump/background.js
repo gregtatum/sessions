@@ -17,7 +17,7 @@ module.exports = function (regl) {
     `,
     frag: glsl`
       precision mediump float;
-      #pragma glslify: snoise4 = require(glsl-noise/simplex/4d)
+      #pragma glslify: snoise3 = require(glsl-noise/simplex/3d)
 
       uniform float time;
       varying vec3 vDirection;
@@ -35,14 +35,11 @@ module.exports = function (regl) {
 
         float blockSize = 20.0;
         vec3 noisePosition = vec3(
-          floor(direction.x * blockSize) / blockSize,
-          floor(direction.y * blockSize) / blockSize,
-          floor(direction.z * blockSize) / blockSize
+          (direction.x * blockSize) / blockSize,
+          (direction.y * blockSize) / blockSize,
+          (direction.z * blockSize) / blockSize
         ) * 7.0;
-        float noise = mix(1.4, 1.8, snoise4(vec4(noisePosition, time * 0.5)));
-
-        float noiseSteps = 8.0;
-        noise = floor(noise * noiseSteps) / noiseSteps;
+        float noise = mix(1.4, 1.8, snoise3(vec3(noisePosition.xy, time * 0.5)));
 
         gl_FragColor = vec4(
           topLight * baseColor * vignette * noise,
