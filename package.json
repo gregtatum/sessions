@@ -23,6 +23,7 @@
     "gl": "4.0.2",
     "gl-catmull-clark": "1.0.0",
     "gl-mat4": "1.1.4",
+    "gl-quat": "^1.0.0",
     "gl-vec2": "1.0.0",
     "glsl-fast-gaussian-blur": "1.0.2",
     "glsl-gamma": "2.0.0",

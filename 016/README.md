@@ -1,0 +1,1 @@
+This session was written near Valentines day. It was supposed to be for my wife, but I gave it away to my Twitter followers first, so I went and bought my wife real flowers intead. It uses quads and subdivisions to generate the parts, and then loops to duplicate the geometry in various shapes.

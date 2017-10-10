@@ -1,0 +1,1 @@
+This was one that I had bigger ideas for, but I couldn't implement them in a reasonable amount of time. I ended up pulling the trigger and releasing it as is. So pretty much this one is a "cool demo bro", and not much else. I will say, this is literally my first time to ever directly use Calculus in programming, which was in of itself exciting.
