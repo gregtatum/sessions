@@ -19,11 +19,11 @@ module.exports = function (regl) {
   const controls = createControls({
     phi: TAU * 0.2,
     theta: 0.2,
-    distanceBounds: [0.5, 1.5],
-    phiBounds: [Math.PI * 0.3, Math.PI * 0.7],
+    thetaBounds: [0.1, 0.3],
+    phiBounds: [Math.PI * 0.4, Math.PI * 0.6],
     zoomSpeed: 0,
     pinchSpeed: 0,
-    rotateSpeed: 0.01,
+    rotateSpeed: 0.001,
     damping: 0.01,
     parent: regl._gl.canvas,
     element: regl._gl.canvas

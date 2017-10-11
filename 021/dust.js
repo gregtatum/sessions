@@ -14,9 +14,10 @@ module.exports = function dustDrawer (regl) {
       varying vec3 vColor;
 
       float POINT_SIZE = 0.03;
-      float POINT_SPEED = -0.012;
+      float POINT_SPEED = -0.05;
       float STAGE_SIZE = 1.3;
       float HALF_STAGE_SIZE = STAGE_SIZE * 0.5;
+      float particleRatioXY = 1.5;
 
       void main() {
         vParticleId = position.x;
@@ -32,7 +33,9 @@ module.exports = function dustDrawer (regl) {
         float z = aspectRatio * (HALF_STAGE_SIZE - STAGE_SIZE * uniqueNumberC)
           + 0.02 * noise(vec2(vParticleId + 23.0, time * 0.1));
 
-        float y = mod(POINT_SPEED * speed * time + uniqueNumberB, STAGE_SIZE) - HALF_STAGE_SIZE;
+        x = mod(x + time * POINT_SPEED * particleRatioXY, STAGE_SIZE) - HALF_STAGE_SIZE;
+
+        float y = mod(POINT_SPEED * (1.0 / particleRatioXY) * speed * time + uniqueNumberB, STAGE_SIZE) - HALF_STAGE_SIZE;
 
         gl_Position = projection * view * vec4(x, y, z, 1.0);
         gl_PointSize = POINT_SIZE * speed * viewportHeight * (2.0 - gl_Position.z);

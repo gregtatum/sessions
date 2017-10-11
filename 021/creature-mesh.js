@@ -13,7 +13,7 @@ module.exports = function createGeometry () {
     size,
     meshWidth,
     tentacleStartingHeight : -size * 0.45,
-    tentacleExtrudeDistance : size * 0.5,
+    tentacleExtrudeDistance : size * 0.6,
     tentacleInset : 0.9,
     twistDistance : 2,
   }
