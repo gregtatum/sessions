@@ -31,8 +31,8 @@ function splitVertical ({positions, cells}, targetCell, t = 0.5) {
  *  a---ad1  ad2---d
  *  target
  */
-function splitVerticalDisjoint (quads, targetCell, t = 0.5) {
-  const {positions, cells, normals} = quads
+function splitVerticalDisjoint (mesh, targetCell, t = 0.5) {
+  const {positions, cells, normals} = mesh
   const [a, b, c, d] = targetCell
   const bc1 = positions.length
   const ad1 = bc1 + 1
@@ -92,8 +92,8 @@ function splitHorizontal ({positions, cells}, targetCell, t = 0.5) {
  *  | target |
  *  a--------d
  */
-function splitHorizontalDisjoint (quads, targetCell, t = 0.5) {
-  const {positions, cells, normals} = quads
+function splitHorizontalDisjoint (mesh, targetCell, t = 0.5) {
+  const {positions, cells, normals} = mesh
   const [a, b, c, d] = targetCell
   const ab1 = positions.length
   const cd1 = ab1 + 1
@@ -134,8 +134,8 @@ function splitHorizontalDisjoint (quads, targetCell, t = 0.5) {
  */
 var inset = (() => {
   var center = [0, 0, 0]
-  return function (quads, targetCell, t = 0) {
-    const {positions, cells, normals} = quads
+  return function (mesh, targetCell, t = 0) {
+    const {positions, cells, normals} = mesh
     const [a, b, c, d] = targetCell
     const e = positions.length
     const f = e + 1
@@ -180,9 +180,9 @@ var extrude = (() => {
   const toTranslate = []
   const translation = []
   const targetCellNormal = []
-  return function (quads, targetCell, insetT = 0, extrude = 0) {
-    const {positions, normals} = quads
-    const ring = inset(quads, targetCell, insetT)
+  return function (mesh, targetCell, insetT = 0, extrude = 0) {
+    const {positions, normals} = mesh
+    const ring = inset(mesh, targetCell, insetT)
     const [qL, qT, qR, qB] = ring
 
     // Enumerate which positions to translate
@@ -203,7 +203,7 @@ var extrude = (() => {
     toTranslate[10] = qB[1]
     toTranslate[11] = qB[2]
 
-    getCellNormal(quads, targetCell, targetCellNormal)
+    getCellNormal(mesh, targetCell, targetCellNormal)
     vec3.scale(translation, targetCellNormal, extrude)
 
     for (let i = 0; i < toTranslate.length; i++) {
@@ -221,21 +221,21 @@ var extrude = (() => {
     const f = positions.length - 3
     const g = positions.length - 2
     const h = positions.length - 1
-    averageNormalForPosition(quads, a, normals[a], normalCache)
-    averageNormalForPosition(quads, b, normals[b], normalCache)
-    averageNormalForPosition(quads, c, normals[c], normalCache)
-    averageNormalForPosition(quads, d, normals[d], normalCache)
-    averageNormalForPosition(quads, e, normals[e], normalCache)
-    averageNormalForPosition(quads, f, normals[f], normalCache)
-    averageNormalForPosition(quads, g, normals[g], normalCache)
-    averageNormalForPosition(quads, h, normals[h], normalCache)
+    averageNormalForPosition(mesh, a, normals[a], normalCache)
+    averageNormalForPosition(mesh, b, normals[b], normalCache)
+    averageNormalForPosition(mesh, c, normals[c], normalCache)
+    averageNormalForPosition(mesh, d, normals[d], normalCache)
+    averageNormalForPosition(mesh, e, normals[e], normalCache)
+    averageNormalForPosition(mesh, f, normals[f], normalCache)
+    averageNormalForPosition(mesh, g, normals[g], normalCache)
+    averageNormalForPosition(mesh, h, normals[h], normalCache)
   }
 })()
 
-function calculatePositionIndexToCells (quads) {
+function calculatePositionIndexToCells (mesh) {
   const toCells = {}
-  for (let i = 0; i < quads.cells.length; i++) {
-    const cell = quads.cells[i]
+  for (let i = 0; i < mesh.cells.length; i++) {
+    const cell = mesh.cells[i]
     for (let j = 0; j < cell.length; j++) {
       const index = cell[j]
       let arr = toCells[index]
@@ -252,12 +252,12 @@ function calculatePositionIndexToCells (quads) {
 var averageNormalForPosition = (() => {
   const cellsCache = []
 
-  return function averageNormalForPosition (quads, positionIndex, target, normalCache, positionIndexToCells) {
+  return function averageNormalForPosition (mesh, positionIndex, target, normalCache, positionIndexToCells) {
     let cells
     if (positionIndexToCells) {
       cells = positionIndexToCells[positionIndex]
     } else {
-      cells = getCellsFromPositionIndex(quads, positionIndex, cellsCache)
+      cells = getCellsFromPositionIndex(mesh, positionIndex, cellsCache)
     }
     vec3.set(target, 0, 0, 0)
 
@@ -269,7 +269,7 @@ var averageNormalForPosition = (() => {
         normal = normalCache.get(cell)
       }
       if (!normal) {
-        normal = getCellNormal(quads, cell, [])
+        normal = getCellNormal(mesh, cell, [])
         if (normalCache) {
           normalCache.set(normal)
         }
@@ -301,8 +301,8 @@ var averageNormalForPosition = (() => {
  */
 var insetDisjoint = (() => {
   var center = [0, 0, 0]
-  return function (quads, targetCell, t = 0) {
-    const {positions, cells, normals} = quads
+  return function (mesh, targetCell, t = 0) {
+    const {positions, cells, normals} = mesh
     const [a, b, c, d] = targetCell
     const positionA = positions[a]
     const positionB = positions[b]
@@ -377,7 +377,7 @@ var insetDisjoint = (() => {
     positions[hR] = positionH.slice()
     positions[hB] = positionH.slice()
 
-    // Normals - assume that disjoint quads all share the same normal.
+    // Normals - assume that disjoint mesh all share the same normal.
     const normal = normals[a]
     normals[aB] = normal.slice()
     normals[aL] = normals[a]
@@ -407,9 +407,9 @@ var insetDisjoint = (() => {
 var extrudeDisjoint = (() => {
   const toTranslate = []
   const translation = []
-  return function (quads, targetCell, insetT = 0, extrude = 0) {
-    const {positions, normals} = quads
-    const ring = insetDisjoint(quads, targetCell, insetT)
+  return function (mesh, targetCell, insetT = 0, extrude = 0) {
+    const {positions, normals} = mesh
+    const ring = insetDisjoint(mesh, targetCell, insetT)
     const [qL, qT, qR, qB] = ring
 
     // Enumerate which positions to translate
@@ -430,7 +430,7 @@ var extrudeDisjoint = (() => {
     toTranslate[10] = qB[1]
     toTranslate[11] = qB[2]
 
-    // Assume that disjoint quads all share the same normal.
+    // Assume that disjoint mesh all share the same normal.
     const targetCellNormal = normals[targetCell[0]]
     vec3.scale(translation, targetCellNormal, extrude)
 
@@ -441,34 +441,34 @@ var extrudeDisjoint = (() => {
 
     // Calculate the normals for the translated rings.
     for (let i = 0; i < ring.length; i++) {
-      updateNormals(quads, ring[i])
+      updateNormals(mesh, ring[i])
     }
   }
 })()
 
-function getCenter (quads, cell, target = []) {
-  const a = quads.positions[cell[0]]
-  const b = quads.positions[cell[1]]
-  const c = quads.positions[cell[2]]
-  const d = quads.positions[cell[3]]
+function getCenter (mesh, cell, target = []) {
+  const a = mesh.positions[cell[0]]
+  const b = mesh.positions[cell[1]]
+  const c = mesh.positions[cell[2]]
+  const d = mesh.positions[cell[3]]
   target[0] = (a[0] + b[0] + c[0] + d[0]) * 0.25
   target[1] = (a[1] + b[1] + c[1] + d[1]) * 0.25
   target[2] = (a[2] + b[2] + c[2] + d[2]) * 0.25
   return target
 }
 
-function clone (quads, cell) {
-  const index = quads.positions.length
+function clone (mesh, cell) {
+  const index = mesh.positions.length
   const clonedCell = [index, index + 1, index + 2, index + 3]
-  quads.cells.push(clonedCell)
-  quads.positions.push(quads.positions[cell[0]].slice())
-  quads.positions.push(quads.positions[cell[1]].slice())
-  quads.positions.push(quads.positions[cell[2]].slice())
-  quads.positions.push(quads.positions[cell[3]].slice())
-  quads.normals.push(quads.normals[cell[0]].slice())
-  quads.normals.push(quads.normals[cell[1]].slice())
-  quads.normals.push(quads.normals[cell[2]].slice())
-  quads.normals.push(quads.normals[cell[3]].slice())
+  mesh.cells.push(clonedCell)
+  mesh.positions.push(mesh.positions[cell[0]].slice())
+  mesh.positions.push(mesh.positions[cell[1]].slice())
+  mesh.positions.push(mesh.positions[cell[2]].slice())
+  mesh.positions.push(mesh.positions[cell[3]].slice())
+  mesh.normals.push(mesh.normals[cell[0]].slice())
+  mesh.normals.push(mesh.normals[cell[1]].slice())
+  mesh.normals.push(mesh.normals[cell[2]].slice())
+  mesh.normals.push(mesh.normals[cell[3]].slice())
   return clonedCell
 }
 
@@ -507,22 +507,22 @@ function cloneCells (mesh, cells) {
   return mesh
 }
 
-function updateNormals (quads, cell) {
-  let normal = quads.normals[cell[0]]
-  getCellNormal(quads, cell, normal)
-  vec3.copy(quads.normals[cell[1]], normal)
-  vec3.copy(quads.normals[cell[2]], normal)
-  vec3.copy(quads.normals[cell[3]], normal)
+function updateNormals (mesh, cell) {
+  let normal = mesh.normals[cell[0]]
+  getCellNormal(mesh, cell, normal)
+  vec3.copy(mesh.normals[cell[1]], normal)
+  vec3.copy(mesh.normals[cell[2]], normal)
+  vec3.copy(mesh.normals[cell[3]], normal)
 }
 
 var getCellNormal = (() => {
   const edgeA = []
   const edgeB = []
 
-  return function getCellNormal (quads, cell, target) {
-    const positionA = quads.positions[cell[0]]
-    const positionB = quads.positions[cell[1]]
-    const positionC = quads.positions[cell[2]]
+  return function getCellNormal (mesh, cell, target) {
+    const positionA = mesh.positions[cell[0]]
+    const positionB = mesh.positions[cell[1]]
+    const positionC = mesh.positions[cell[2]]
     vec3.subtract(edgeA, positionB, positionA)
     vec3.subtract(edgeB, positionC, positionB)
     vec3.normalize(target, vec3.cross(target, edgeA, edgeB))
@@ -530,9 +530,9 @@ var getCellNormal = (() => {
   }
 })()
 
-function getCellsFromPositionIndex (quads, index, target = []) {
-  for (let i = 0; i < quads.cells.length; i++) {
-    const cell = quads.cells[i]
+function getCellsFromPositionIndex (mesh, index, target = []) {
+  for (let i = 0; i < mesh.cells.length; i++) {
+    const cell = mesh.cells[i]
     if (cell.indexOf(index) >= 0) {
       target.push(cell)
     }
@@ -540,13 +540,13 @@ function getCellsFromPositionIndex (quads, index, target = []) {
   return target
 }
 
-function flip (quads, cell) {
+function flip (mesh, cell) {
   const [a, b, c, d] = cell
   cell.reverse()
-  const nA = quads.normals[a]
-  const nB = quads.normals[b]
-  const nC = quads.normals[c]
-  const nD = quads.normals[d]
+  const nA = mesh.normals[a]
+  const nB = mesh.normals[b]
+  const nC = mesh.normals[c]
+  const nD = mesh.normals[d]
   vec3.scale(nA, nA, -1)
   vec3.scale(nB, nB, -1)
   vec3.scale(nC, nC, -1)
@@ -554,17 +554,17 @@ function flip (quads, cell) {
   return cell
 }
 
-function createQuad (options, quads = {}) {
-  if (!quads.positions) {
-    quads.positions = []
+function createQuad (options, mesh = {}) {
+  if (!mesh.positions) {
+    mesh.positions = []
   }
-  if (!quads.normals) {
-    quads.normals = []
+  if (!mesh.normals) {
+    mesh.normals = []
   }
-  if (!quads.cells) {
-    quads.cells = []
+  if (!mesh.cells) {
+    mesh.cells = []
   }
-  const index = quads.positions.length
+  const index = mesh.positions.length
   let direction
   const cell = [
     index,
@@ -572,12 +572,12 @@ function createQuad (options, quads = {}) {
     index + 2,
     index + 3
   ]
-  quads.cells.push(cell)
+  mesh.cells.push(cell)
   if (options.positions) {
-    quads.positions.push(options.positions[0])
-    quads.positions.push(options.positions[1])
-    quads.positions.push(options.positions[2])
-    quads.positions.push(options.positions[3])
+    mesh.positions.push(options.positions[0])
+    mesh.positions.push(options.positions[1])
+    mesh.positions.push(options.positions[2])
+    mesh.positions.push(options.positions[3])
   } else {
     let w, h
     if (options.w && options.h) {
@@ -592,56 +592,56 @@ function createQuad (options, quads = {}) {
     direction = facing[1]
     switch (axis) {
       case 'x':
-        quads.positions.push([0, -w, -h])
-        quads.positions.push([0, w, -h])
-        quads.positions.push([0, w, h])
-        quads.positions.push([0, -w, h])
+        mesh.positions.push([0, -w, -h])
+        mesh.positions.push([0, w, -h])
+        mesh.positions.push([0, w, h])
+        mesh.positions.push([0, -w, h])
         break
       case 'y':
-        quads.positions.push([-w, 0, -h])
-        quads.positions.push([-w, 0, h])
-        quads.positions.push([w, 0, h])
-        quads.positions.push([w, 0, -h])
+        mesh.positions.push([-w, 0, -h])
+        mesh.positions.push([-w, 0, h])
+        mesh.positions.push([w, 0, h])
+        mesh.positions.push([w, 0, -h])
         break
       case 'z':
-        quads.positions.push([-w, -h, 0])
-        quads.positions.push([-w, h, 0])
-        quads.positions.push([w, h, 0])
-        quads.positions.push([w, -h, 0])
+        mesh.positions.push([-w, -h, 0])
+        mesh.positions.push([-w, h, 0])
+        mesh.positions.push([w, h, 0])
+        mesh.positions.push([w, -h, 0])
         break
     }
   }
 
-  const normal = getCellNormal(quads, cell, [])
-  quads.normals.push(normal)
-  quads.normals.push(normal.slice())
-  quads.normals.push(normal.slice())
-  quads.normals.push(normal.slice())
+  const normal = getCellNormal(mesh, cell, [])
+  mesh.normals.push(normal)
+  mesh.normals.push(normal.slice())
+  mesh.normals.push(normal.slice())
+  mesh.normals.push(normal.slice())
 
   if (direction === '-') {
-    flip(quads, cell)
+    flip(mesh, cell)
   }
 
-  return {quads, cell}
+  return {mesh, cell}
 }
 
 function createBoxDisjoint (x = 1, y = 1, z = 1, optionalQuads) {
-  const {quads, cell} = createQuad({w: x, h: z}, optionalQuads)
-  quads.positions.forEach(position => {
+  const {mesh, cell} = createQuad({w: x, h: z}, optionalQuads)
+  mesh.positions.forEach(position => {
     position[1] -= y / 2
   })
-  clone(quads, cell)
-  flip(quads, quads.cells[1])
-  extrudeDisjoint(quads, cell, 0, y)
-  return quads
+  clone(mesh, cell)
+  flip(mesh, mesh.cells[1])
+  extrudeDisjoint(mesh, cell, 0, y)
+  return mesh
 }
 
 function createBox (x, y, z, optionalQuads) {
   return mergePositions(createBoxDisjoint(x, y, z, optionalQuads))
 }
 
-function mergePositions (quads) {
-  const {positions, normals, cells} = quads
+function mergePositions (mesh) {
+  const {positions, normals, cells} = mesh
   // Go through each position.
   for (let aIndex = 0; aIndex < positions.length; aIndex++) {
     const a = positions[aIndex]
@@ -676,19 +676,19 @@ function mergePositions (quads) {
 
   const normalCache = new Map()
   for (let i = 0; i < positions.length; i++) {
-    averageNormalForPosition(quads, i, normals[i], normalCache)
+    averageNormalForPosition(mesh, i, normals[i], normalCache)
   }
-  return quads
+  return mesh
 }
 
-function elementsFromQuads (regl, quads, drawMode = 'triangles', ArrayType = Uint16Array) {
+function elementsFromQuads (regl, mesh, drawMode = 'triangles', ArrayType = Uint16Array) {
   const countPerCell = drawMode === 'lines' ? 8 : 6
-  const elements = new ArrayType(quads.cells.length * countPerCell)
+  const elements = new ArrayType(mesh.cells.length * countPerCell)
 
   if (drawMode === 'lines') {
     // lines
-    for (let i = 0; i < quads.cells.length; i++) {
-      const [a, b, c, d] = quads.cells[i]
+    for (let i = 0; i < mesh.cells.length; i++) {
+      const [a, b, c, d] = mesh.cells[i]
       const offset = i * countPerCell
       // Lines
       elements[offset + 0] = a
@@ -704,9 +704,9 @@ function elementsFromQuads (regl, quads, drawMode = 'triangles', ArrayType = Uin
       elements[offset + 7] = a
     }
   } else {
-    for (let i = 0; i < quads.cells.length; i++) {
+    for (let i = 0; i < mesh.cells.length; i++) {
       const offset = i * countPerCell
-      const [a, b, c, d] = quads.cells[i]
+      const [a, b, c, d] = mesh.cells[i]
       // Triangle:
       elements[offset + 0] = a
       elements[offset + 1] = b
@@ -720,24 +720,24 @@ function elementsFromQuads (regl, quads, drawMode = 'triangles', ArrayType = Uin
   return elements
 }
 
-function computeNormals (quads) {
-  if (!quads.normals) {
-    quads.normals = []
+function computeNormals (mesh) {
+  if (!mesh.normals) {
+    mesh.normals = []
   }
   const normalCache = new Map()
-  const positionIndexToCells = calculatePositionIndexToCells(quads)
-  for (let i = 0; i < quads.positions.length; i++) {
-    let normal = quads.normals[i]
+  const positionIndexToCells = calculatePositionIndexToCells(mesh)
+  for (let i = 0; i < mesh.positions.length; i++) {
+    let normal = mesh.normals[i]
     if (!normal) {
       normal = []
-      quads.normals[i] = normal
+      mesh.normals[i] = normal
     }
-    averageNormalForPosition(quads, i, normal, normalCache, positionIndexToCells)
+    averageNormalForPosition(mesh, i, normal, normalCache, positionIndexToCells)
   }
-  return quads
+  return mesh
 }
 
-function splitLoop (quads, cell, t = 0.5, opposite) {
+function splitLoop (mesh, cell, t = 0.5, opposite) {
   const loop = [cell]
   let cellIndexA, cellIndexB, cellIndexC, cellIndexD
   if (opposite) {
@@ -754,24 +754,24 @@ function splitLoop (quads, cell, t = 0.5, opposite) {
 
   const positionIndexLB = cell[cellIndexA]
   const positionIndexLT = cell[cellIndexB]
-  const positionIndexMT = quads.positions.length
-  const positionIndexMB = quads.positions.length + 1
+  const positionIndexMT = mesh.positions.length
+  const positionIndexMB = mesh.positions.length + 1
   const positionIndexRT = cell[cellIndexC]
   const positionIndexRB = cell[cellIndexD]
 
-  const positionA = vec3.lerp([], quads.positions[positionIndexLT], quads.positions[positionIndexRT], t)
-  const positionB = vec3.lerp([], quads.positions[positionIndexLB], quads.positions[positionIndexRB], t)
-  const normalA = vec3.lerp([], quads.normals[positionIndexLT], quads.normals[positionIndexRT], t)
-  const normalB = vec3.lerp([], quads.normals[positionIndexLB], quads.normals[positionIndexRB], t)
-  quads.positions.push(positionA)
-  quads.positions.push(positionB)
-  quads.normals.push(vec3.normalize(normalA, normalA))
-  quads.normals.push(vec3.normalize(normalB, normalB))
+  const positionA = vec3.lerp([], mesh.positions[positionIndexLT], mesh.positions[positionIndexRT], t)
+  const positionB = vec3.lerp([], mesh.positions[positionIndexLB], mesh.positions[positionIndexRB], t)
+  const normalA = vec3.lerp([], mesh.normals[positionIndexLT], mesh.normals[positionIndexRT], t)
+  const normalB = vec3.lerp([], mesh.normals[positionIndexLB], mesh.normals[positionIndexRB], t)
+  mesh.positions.push(positionA)
+  mesh.positions.push(positionB)
+  mesh.normals.push(vec3.normalize(normalA, normalA))
+  mesh.normals.push(vec3.normalize(normalB, normalB))
 
   // Split cells
   const cellL = cell
   const cellR = []
-  quads.cells.push(cellR)
+  mesh.cells.push(cellR)
   cellL[cellIndexC] = positionIndexMT
   cellL[cellIndexD] = positionIndexMB
   cellR[cellIndexA] = positionIndexMB
@@ -781,18 +781,18 @@ function splitLoop (quads, cell, t = 0.5, opposite) {
 
   // Split by walking up and down from the cell, and then merge the last points if they
   // meet.
-  const newPositionIndex = _walkAndSplitLoop(quads, positionIndexLT, positionIndexMT, positionIndexRT, t)
-  const didMerge = _mergePositionsIfEqual(quads, newPositionIndex, positionIndexMB)
+  const newPositionIndex = _walkAndSplitLoop(mesh, positionIndexLT, positionIndexMT, positionIndexRT, t)
+  const didMerge = _mergePositionsIfEqual(mesh, newPositionIndex, positionIndexMB)
 
   if (!didMerge) {
-    _walkAndSplitLoop(quads, positionIndexRB, positionIndexMB, positionIndexLB, 1 - t)
+    _walkAndSplitLoop(mesh, positionIndexRB, positionIndexMB, positionIndexLB, 1 - t)
   }
 
-  return quads
+  return mesh
 }
 
-function _mergePositionsIfEqual (quads, positionIndexA, positionIndexB) {
-  const {positions, normals, cells} = quads
+function _mergePositionsIfEqual (mesh, positionIndexA, positionIndexB) {
+  const {positions, normals, cells} = mesh
   if (positionIndexA >= 0 && positionIndexB >= 0) {
     const positionA = positions[positionIndexA]
     const positionB = positions[positionIndexB]
@@ -829,7 +829,7 @@ function _mergePositionsIfEqual (quads, positionIndexA, positionIndexB) {
 }
 
 /**
- * Utility function to split quads in a loop in a single direction, based off of the
+ * Utility function to split mesh in a loop in a single direction, based off of the
  * previously split quad's positions. The cell orientation is based off the previously
  * split cell.
  *
@@ -843,10 +843,10 @@ function _mergePositionsIfEqual (quads, positionIndexA, positionIndexB) {
  *   |    |     |
  *   *----*-----*
  */
-function _walkAndSplitLoop (quads, positionIndexLB, positionIndexMB, positionIndexRB, t) {
+function _walkAndSplitLoop (mesh, positionIndexLB, positionIndexMB, positionIndexRB, t) {
   let newPositionIndex
   while (true) {
-    const cell = getCellFromEdge(quads, positionIndexLB, positionIndexRB)
+    const cell = getCellFromEdge(mesh, positionIndexLB, positionIndexRB)
     if (!cell) {
       break
     }
@@ -856,20 +856,20 @@ function _walkAndSplitLoop (quads, positionIndexLB, positionIndexMB, positionInd
     const cellIndexC = (cellIndexD + 3) % 4
 
     const positionIndexLT = cell[cellIndexB]
-    const positionIndexMT = quads.positions.length
+    const positionIndexMT = mesh.positions.length
     const positionIndexRT = cell[cellIndexC]
 
     // Create a new middle position at the opposite end
-    const position = vec3.lerp([], quads.positions[positionIndexLT], quads.positions[positionIndexRT], t)
-    const normal = vec3.lerp([], quads.normals[positionIndexLT], quads.normals[positionIndexRT], t)
+    const position = vec3.lerp([], mesh.positions[positionIndexLT], mesh.positions[positionIndexRT], t)
+    const normal = vec3.lerp([], mesh.normals[positionIndexLT], mesh.normals[positionIndexRT], t)
     vec3.normalize(normal, normal)
-    quads.positions.push(position)
-    quads.normals.push(normal)
+    mesh.positions.push(position)
+    mesh.normals.push(normal)
 
     // Construct the split cells.
     const cellL = cell
     const cellR = []
-    quads.cells.push(cellR)
+    mesh.cells.push(cellR)
 
     cellL[cellIndexC] = positionIndexMT
     cellL[cellIndexD] = positionIndexMB
@@ -889,8 +889,8 @@ function _walkAndSplitLoop (quads, positionIndexLB, positionIndexMB, positionInd
   return newPositionIndex
 }
 
-function getCellFromEdge (quads, positionIndexA, positionIndexB, previousCell) {
-  return quads.cells.find(cell => {
+function getCellFromEdge (mesh, positionIndexA, positionIndexB, previousCell) {
+  return mesh.cells.find(cell => {
     if (cell === previousCell) {
       return false
     }
@@ -915,8 +915,8 @@ function averageNormals (a, b, result = []) {
   return vec3.normalize(result, vec3.add(result, a, b))
 }
 
-function createGeometryGetter (quads, key) {
-  const geometry = quads[key]
+function createGeometryGetter (mesh, key) {
+  const geometry = mesh[key]
   let start = geometry.length
   return {
     mark: () => start = geometry.length,
@@ -924,27 +924,27 @@ function createGeometryGetter (quads, key) {
   }
 }
 
-function getNewGeometry (quads, key, callback) {
-  const geometry = quads[key]
+function getNewGeometry (mesh, key, callback) {
+  const geometry = mesh[key]
   let start = geometry.length
   callback()
   return geometry.slice(start, geometry.length)
 }
 
-function subdivide (quads, subdivisions, positions = quads.positions, cells = quads.cells) {
+function subdivide (mesh, subdivisions, positions = mesh.positions, cells = mesh.cells) {
   const result = catmullClark(positions, cells, subdivisions, false)
-  quads.positions = result.positions
-  quads.cells = result.cells
-  computeNormals(quads)
-  return quads
+  mesh.positions = result.positions
+  mesh.cells = result.cells
+  computeNormals(mesh)
+  return mesh
 }
 
-function computeCenterPositions (quads) {
-  return quads.cells.map(cell => computeCellCenter(quads, cell))
+function computeCenterPositions (mesh) {
+  return mesh.cells.map(cell => computeCellCenter(mesh, cell))
 }
 
-function computeCellCenter (quads, [aI, bI, cI, dI]) {
-  const { positions } = quads
+function computeCellCenter (mesh, [aI, bI, cI, dI]) {
+  const { positions } = mesh
   const a = positions[aI]
   const b = positions[bI]
   const c = positions[cI]
@@ -956,21 +956,17 @@ function computeCellCenter (quads, [aI, bI, cI, dI]) {
   ]
 }
 
-function insetLoop (quads, cell, t = 0.5, opposite) {
+function insetLoop (mesh, cell, t = 0.5, opposite) {
   const tA = 1 - 0.5 * t
   const tB = 0.5 * t + (1 - tA) * t
-  splitLoop(quads, cell, tA, opposite)
-  splitLoop(quads, cell, tB, opposite)
-  return quads
+  splitLoop(mesh, cell, tA, opposite)
+  splitLoop(mesh, cell, tB, opposite)
+  return mesh
 }
 
-function getLoopPositions (quads, cell, opposite) {
-
-}
-
-function getLoop (quads, cell, type, opposite) {
+function getLoop (mesh, cell, type, opposite) {
   if (type === 'cells') {
-    return _getLoopCells(quads, cell, opposite)
+    return _getLoopCells(mesh, cell, opposite)
   }
   let positionIndexLB, positionIndexRB
   if (opposite) {
@@ -982,13 +978,13 @@ function getLoop (quads, cell, type, opposite) {
   }
 
   return [
-    ..._getLoopOneDirection(quads, cell, type, positionIndexLB, positionIndexRB),
-    ...cell.map(i => quads[type][i]),
-    ..._getLoopOneDirection(quads, cell, type, positionIndexRB, positionIndexLB).reverse()
+    ..._getLoopOneDirection(mesh, cell, type, positionIndexLB, positionIndexRB),
+    ...cell.map(i => mesh[type][i]),
+    ..._getLoopOneDirection(mesh, cell, type, positionIndexRB, positionIndexLB).reverse()
   ]
 }
 
-function _getLoopCells (quads, cell, opposite) {
+function _getLoopCells (mesh, cell, opposite) {
   let positionIndexLB, positionIndexRB
   if (opposite) {
     positionIndexLB = cell[1]
@@ -999,19 +995,19 @@ function _getLoopCells (quads, cell, opposite) {
   }
 
   return [
-    ..._getLoopCellsOneDirection(quads, cell, positionIndexLB, positionIndexRB),
+    ..._getLoopCellsOneDirection(mesh, cell, positionIndexLB, positionIndexRB),
     cell,
-    ..._getLoopCellsOneDirection(quads, cell, positionIndexRB, positionIndexLB).reverse()
+    ..._getLoopCellsOneDirection(mesh, cell, positionIndexRB, positionIndexLB).reverse()
   ]
 }
 
-function _getLoopCellsOneDirection (quads, cell, indexA, indexB) {
+function _getLoopCellsOneDirection (mesh, cell, indexA, indexB) {
   const loop = []
   let positionIndexLB = indexA
   let positionIndexRB = indexB
   let neighborCell = cell
   while (true) {
-    neighborCell = getCellFromEdge(quads, positionIndexLB, positionIndexRB, neighborCell)
+    neighborCell = getCellFromEdge(mesh, positionIndexLB, positionIndexRB, neighborCell)
     if (!neighborCell || neighborCell === cell) {
       break
     }
@@ -1030,13 +1026,13 @@ function _getLoopCellsOneDirection (quads, cell, indexA, indexB) {
   return loop
 }
 
-function _getLoopOneDirection (quads, cell, type, indexA, indexB) {
+function _getLoopOneDirection (mesh, cell, type, indexA, indexB) {
   const loop = []
   let positionIndexLB = indexA
   let positionIndexRB = indexB
   let neighborCell = cell
   while (true) {
-    neighborCell = getCellFromEdge(quads, positionIndexLB, positionIndexRB, neighborCell)
+    neighborCell = getCellFromEdge(mesh, positionIndexLB, positionIndexRB, neighborCell)
     if (!neighborCell || neighborCell === cell) {
       break
     }
@@ -1046,8 +1042,8 @@ function _getLoopOneDirection (quads, cell, type, indexA, indexB) {
     const cellIndexB = (cellIndexA + 1) % 4
     const cellIndexC = (cellIndexD + 3) % 4
 
-    loop.push(quads[type][neighborCell[cellIndexB]])
-    loop.push(quads[type][neighborCell[cellIndexC]])
+    loop.push(mesh[type][neighborCell[cellIndexB]])
+    loop.push(mesh[type][neighborCell[cellIndexC]])
 
     // Modify the arguments to keep on walking.
     positionIndexLB = neighborCell[cellIndexB]
@@ -1056,32 +1052,70 @@ function _getLoopOneDirection (quads, cell, type, indexA, indexB) {
   return loop
 }
 
-function mirror (quads, cells, axis) {
+function mirror (mesh, cells, axis) {
   const mirrorMap = {}
 
   cells.forEach(cell => {
     const mirrorCell = cell.map(positionIndex => {
       let mirrorIndex = mirrorMap[positionIndex]
       if (mirrorIndex === undefined) {
-        mirrorIndex = quads.positions.length
+        mirrorIndex = mesh.positions.length
         mirrorMap[positionIndex] = mirrorIndex
-        const position = quads.positions[positionIndex]
-        const normal = quads.normals[positionIndex]
+        const position = mesh.positions[positionIndex]
+        const normal = mesh.normals[positionIndex]
         const mirrorPosition = position.slice()
         const mirrorNormal = normal.slice()
         mirrorPosition[axis] *= -1
         mirrorNormal[axis] *= -1
-        quads.positions.push(mirrorPosition)
-        quads.normals.push(mirrorNormal)
+        mesh.positions.push(mirrorPosition)
+        mesh.normals.push(mirrorNormal)
       }
       return mirrorIndex
     })
     mirrorCell.reverse()
-    quads.cells.push(mirrorCell)
+    mesh.cells.push(mirrorCell)
   })
 
-  return quads
+  return mesh
 }
+
+function getCellNeighbors(mesh, cell) {
+  const neighbors = []
+  for (let i = 0; i < 4; i++) {
+    const positionIndexA = cell[i]
+    const positionIndexB = cell[(i + 1) % 4]
+    neighbors.push(getCellFromEdge(mesh, positionIndexA, positionIndexB, cell))
+  }
+  return neighbors
+}
+
+function growSelection(mesh, cells, times = 1) {
+  let selection = cells
+  for (let i = 0; i < times; i++) {
+    const newSelection = selection.map(cell => getCellNeighbors(mesh, cell))
+    newSelection.unshift(selection)
+    selection = _flattenUnique(newSelection)
+  }
+  return selection
+}
+
+/**
+ * Performs: [[a, b], [b, c], ...] => [a, b, c, ...]
+ */
+function _flattenUnique (tuples) {
+  const reduction = []
+  for (let i = 0; i < tuples.length; i++) {
+    const tuple = tuples[i]
+    for (let j = 0; j < tuple.length; j++) {
+      const value = tuple[j]
+      if (!reduction.includes(value)) {
+        reduction.push(value)
+      }
+    }
+  }
+  return reduction
+}
+
 
 module.exports = {
   averageNormalForPosition,
@@ -1115,5 +1149,7 @@ module.exports = {
   splitLoop,
   splitVertical,
   splitVerticalDisjoint,
-  updateNormals
+  updateNormals,
+  getCellNeighbors,
+  growSelection,
 }
