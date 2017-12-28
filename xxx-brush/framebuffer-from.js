@@ -4,18 +4,27 @@ exports.canvas2d = function (regl, initializeCanvas) {
   canvas.width = window.innerWidth * window.devicePixelRatio
   canvas.height = window.innerHeight * window.devicePixelRatio
   initializeCanvas(canvas, ctx)
-  const texture = regl.texture(canvas)
   const framebuffer = regl.framebuffer({
-    color: texture
+    color: regl.texture({
+      data: canvas,
+      mag: 'linear',
+      min: 'linear',
+      // wrap: 'repeat',
+    }),
   })
   return framebuffer
 }
 
 exports.draw = function (regl, draw) {
   const framebuffer = regl.framebuffer({
-    width: regl._gl.drawingBufferWidth,
-    height: regl._gl.drawingBufferHeight,
     colorType: 'float',
+    color: regl.texture({
+      width: regl._gl.drawingBufferWidth,
+      height: regl._gl.drawingBufferHeight,
+      mag: 'linear',
+      min: 'linear',
+      // wrap: 'repeat',
+    })
   })
   const withFramebuffer = regl({ framebuffer })
   const withFullScreenQuad = require('./full-screen-quad')(regl)

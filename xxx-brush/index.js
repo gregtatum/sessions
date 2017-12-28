@@ -2,7 +2,7 @@ const regl = require('regl')({
   extensions: ['OES_texture_float']
 })
 
-const drawSmudgePad = require('./smudge-pad')(regl)
+const drawSmudgePad = require('./smudge')(regl)
 
 const frameLoop = regl.frame(() => {
   try {
