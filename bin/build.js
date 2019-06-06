@@ -4,7 +4,7 @@ const fs = require('fs')
 const template = require('lodash.template')
 const generateAllHtml = require('../common/generate-html')
 const browserify = require('browserify')
-const UglifyJS = require('uglify-js')
+const UglifyJS = require('uglify-es')
 global.headlessRegl = require('../common/headless-regl')
 const sessionNumbers = (
   getDirectories(path.resolve(__dirname, '..')).filter(s => /^\d+$/.exec(s))
@@ -56,7 +56,12 @@ function browserifyBundle (callback) {
       throw err
     }
     console.log('Compressing bundle', bundlePath)
-    const result = UglifyJS.minify(src.toString(), { fromString: true })
+    console.log({ src })
+    const result = UglifyJS.minify(src.toString())
+    if (result.error) {
+      throw result.error
+    }
+    console.log({ result })
 
     console.log('Writing bundle', bundlePath)
     fs.writeFileSync(bundlePath, result.code)
