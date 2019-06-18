@@ -10,8 +10,7 @@ const clear = { depth: 1, color: [0, 0, 0, 1] }
 const {drawSceneToFramebuffer, drawPostProcessing} = require('./post-process')(regl)
 const drawPass = require('./post-process/draw-pass')(regl)
 const drawOutput = require('./post-process/output')(regl, drawPass)
-const drawSSAO = require('./ssao')(regl);
-const drawBackdrop = require('./backdrop')(regl);
+const { drawSSAONoisy, drawSSAOBlur, withSsaoFBO } = require('./ssao')(regl);
 
 const {
   drawToGeometryBuffers,
@@ -23,17 +22,19 @@ const drawLight = regl({
   frag: glsl`
     precision mediump float;
     varying vec2 vUv;
-    uniform sampler2D albedoTexture, normalTexture, positionTexture;
+    uniform sampler2D albedoTexture, normalTexture, positionTexture, ssaoFBO;
 
     void main () {
       vec3 albedo = texture2D(albedoTexture, vUv).xyz;
       vec3 normal = texture2D(normalTexture, vUv).xyz;
+      float ssao = texture2D(ssaoFBO, vUv).x;
 
       float brightness = dot(normal, vec3(0.0, 1.0, 0.0));
-      gl_FragColor = vec4(
-        mix(brightness * albedo, albedo, 0.8),
-        1.0
-      );
+
+      vec3 lighting = mix(brightness * albedo, albedo, 0.8);
+      lighting = 1.5 * mix(lighting, lighting * ssao, 0.7);
+
+      gl_FragColor = vec4(lighting, 1.0);
     }
   `,
 })
@@ -69,25 +70,25 @@ resl({
               color: [0, 0, 0, 255],
               depth: 1
             })
-            drawBackdrop();
+
             for (const box of boxes) {
+              // TODO - This is horrible, as it redraws the screen for each box.
               drawBox(box)
             }
           });
 
           withGeometryBuffers(() => {
-            // drawLight();
-            drawSSAO();
+            drawSSAONoisy(); // This is drawn to an internal buffer.
+          });
+
+          drawSSAOBlur(); // This is drawn to an internal buffer.
+
+          withGeometryBuffers(() => {
+            withSsaoFBO(() => {
+              drawLight();
+            });
           });
         });
-
-        // drawSceneToFramebuffer(props => {
-        //   draw();
-        // })
-
-        // drawPostProcessing(({sceneFBO}) => {
-        //   drawOutput({sourceFBO: sceneFBO})
-        // })
 
         window.frameDone()
       } catch (error) {

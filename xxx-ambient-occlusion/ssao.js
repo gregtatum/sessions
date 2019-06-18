@@ -2,15 +2,20 @@ const glsl = require('glslify')
 const vec3 = require('gl-vec3')
 const lerp = require('lerp')
 
+/**
+ * Implement screen space ambient occlusion.
+ * See: https://learnopengl.com/Advanced-Lighting/SSAO
+ */
 module.exports = function createSSAO(regl, config = {}) {
   config = Object.assign({
     noiseWidth: 4,
-    kernelCount: 33,
+    kernelCount: 64,
     radius: 0.4,
     bias: 0.025,
     // The following values are computed based on the kernel size.
     kernelWidth: 0,
     kernelSqSize: 0,
+    noiseWidthHalf: 0
   }, config);
 
   {
@@ -18,16 +23,32 @@ module.exports = function createSSAO(regl, config = {}) {
     const rawWidth = Math.pow(config.kernelCount, 0.5);
     let width = 2;
     while (width < rawWidth) {
+      // The width needs to be a power of 2.
       width *= width;
     }
     config.kernelWidth = width;
     config.kernelSqSize = width * width;
+
+    config.noiseWidthHalf = config.noiseWidth / 2;
+    if (config.noiseWidthHalf !== Math.floor(config.noiseWidthHalf)) {
+      throw new Error("The noiseWidth needs to be an even number.")
+    }
   }
+
+  // Create the target framebuffers.
+  const noisySsaoFBO = regl.framebuffer({
+    color: regl.texture({ wrap: 'clamp' }),
+    depth: false
+  });
+  const ssaoFBO = regl.framebuffer({
+    color: regl.texture({ wrap: 'clamp' }),
+    depth: false
+  });
 
   const noiseTexture = createNoiseTetxure(regl, config);
   const kernelTexture = createKernelTexture(regl, config);
 
-  const drawSSAO = regl({
+  const drawSSAONoisy = regl({
     frag: glsl`
       precision mediump float;
       uniform sampler2D albedoTexture, normalTexture, worldPositionTexture,
@@ -95,10 +116,76 @@ module.exports = function createSSAO(regl, config = {}) {
       kernelCount: config.kernelCount,
       radius: config.radius,
       bias: config.bias,
-    }
-  })
+    },
+    framebuffer: ({viewportWidth, viewportHeight}) => {
+      noisySsaoFBO.resize(viewportWidth, viewportHeight)
+      return noisySsaoFBO
+    },
+  });
 
-  return drawSSAO;
+  // Create a blur shader, this will blur the somewhat noisy results of the previous
+  // draw pass.
+  const drawSSAOBlur = regl({
+    // Trivially pass through the triangle to the frag shader.
+    vert: glsl`
+      precision mediump float;
+      attribute vec2 position;
+      varying vec2 vUv;
+      void main() {
+        vUv = 0.5 * (position + 1.0);
+        gl_Position = vec4(position, 0, 1);
+    }`,
+    frag: glsl`
+      precision mediump float;
+      uniform sampler2D noisySsaoFBO;
+      uniform float noiseArea;
+      uniform vec2 texelSize;
+      varying vec2 vUv;
+      void main() {
+        float result = 0.0;
+
+        // Go through the size of the noise and blur it.
+        for (int x = -${config.noiseWidthHalf}; x < ${config.noiseWidthHalf}; x++) {
+          for (int y = -${config.noiseWidthHalf}; y < ${config.noiseWidthHalf}; y++) {
+            vec2 offset = vec2(float(x), float(y)) * texelSize;
+            // Accumulate the result.
+            result += texture2D(
+              noisySsaoFBO,
+              vUv + offset
+            ).r;
+          }
+        }
+
+        // Divide by the area of the noise to normalize the result.
+        gl_FragColor = vec4(vec3(result / noiseArea), 1.0);
+      }
+    `,
+    attributes: {
+      // Create a full-screen triangle.
+      position: [ -4, -4, 4, -4, 0, 4 ]
+    },
+    uniforms: {
+      noiseArea: config.noiseWidth * config.noiseWidth,
+      texelSize: ({ viewportWidth, viewportHeight }) => ([
+        1.0 / viewportWidth,
+        1.0 / viewportHeight
+      ]),
+      noisySsaoFBO,
+    },
+    framebuffer: ({viewportWidth, viewportHeight}) => {
+      ssaoFBO.resize(viewportWidth, viewportHeight)
+      return ssaoFBO
+    },
+    count: 3,
+  });
+
+  const withSsaoFBO = regl({
+    uniforms: {
+      ssaoFBO
+    }
+  });
+
+  return { drawSSAONoisy, drawSSAOBlur, withSsaoFBO };
 }
 
 function createNoiseTetxure(regl, { noiseWidth }) {
@@ -142,7 +229,6 @@ function createKernelTexture(regl, { kernelSqSize, kernelWidth }) {
 
     data.push(point);
   }
-  console.log({ data })
 
   return regl.texture({
     width: kernelWidth,
