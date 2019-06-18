@@ -10,6 +10,8 @@ const clear = { depth: 1, color: [0, 0, 0, 1] }
 const {drawSceneToFramebuffer, drawPostProcessing} = require('./post-process')(regl)
 const drawPass = require('./post-process/draw-pass')(regl)
 const drawOutput = require('./post-process/output')(regl, drawPass)
+const drawSSAO = require('./ssao')(regl);
+const drawBackdrop = require('./backdrop')(regl);
 
 const {
   drawToGeometryBuffers,
@@ -40,6 +42,17 @@ let i = 0
 resl({
   manifest: {},
   onDone: (assets) => {
+    // Generate some box position and sizing informatino.
+    const dist = 0.3;
+    const boxes = Array(20).fill().map(() => ({
+      position: [
+        Math.random() * dist - (dist * 0.5),
+        Math.random() * dist - (dist * 0.5),
+        Math.random() * dist - (dist * 0.5),
+      ],
+      size: Math.random() * 0.25 + 0.25
+    }));
+
     const frameLoop = regl.frame(({viewportWidth, viewportHeight}) => {
       try {
         const stutter = false;
@@ -56,11 +69,15 @@ resl({
               color: [0, 0, 0, 255],
               depth: 1
             })
-            drawBox()
+            drawBackdrop();
+            for (const box of boxes) {
+              drawBox(box)
+            }
           });
 
           withGeometryBuffers(() => {
-            drawLight();
+            // drawLight();
+            drawSSAO();
           });
         });
 

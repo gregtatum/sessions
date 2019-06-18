@@ -13,8 +13,8 @@ module.exports = function (regl) {
   const position = [0, 0, 0.7]
   const camera = createCamera({
     fov: FOV,
-    near: 0.01,
-    far: 100,
+    near: 0.2,
+    far: 2,
     position
   })
 

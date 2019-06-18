@@ -5,6 +5,7 @@ module.exports = function createDeferredRendering (regl) {
   const normalTexture = regl.texture({type: 'float'});
   const positionTexture = regl.texture({type: 'float'});
 
+  // Note, everything is in view space.
   const geometryBuffers = regl.framebuffer({
     color: [
       albedoTexture,
@@ -20,27 +21,32 @@ module.exports = function createDeferredRendering (regl) {
       attribute vec3 position;
       attribute vec3 normal;
 
+      uniform mat3 normalView;
+      uniform mat4 projection, view, model;
+
       varying vec3 vPosition;
       varying vec3 vNormal;
 
-      uniform mat4 projView, model;
-
       void main() {
-        vNormal = normal;
-        vec4 worldSpacePosition = model * vec4(position, 1);
-        vPosition = worldSpacePosition.xyz;
-        gl_Position = projView * worldSpacePosition;
+        // Transform everything into view space.
+        vec4 position = view * model * vec4(position, 1);
+        vNormal = normalView * normal;
+        vPosition = position.xyz;
+
+        // The final calculation applies projection as well.
+        gl_Position = projection * position;
       }
     `,
     frag: glsl`
-#extension GL_EXT_draw_buffers : require
+      #extension GL_EXT_draw_buffers : require
       precision mediump float;
 
       varying vec3 vNormal;
       varying vec3 vPosition;
 
       void main () {
-        gl_FragData[0] = vec4(vec3(1.0, 0.5, 0.5), 1.0);
+        vec3 albedo = vec3(0.8, 0.0, 0.2);
+        gl_FragData[0] = vec4(albedo, 1.0);
         gl_FragData[1] = vec4(vNormal, 0.0);
         gl_FragData[2] = vec4(vPosition, 0.0);
       }
