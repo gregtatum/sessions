@@ -1,10 +1,15 @@
 const regl = require('../common/regl')({
-  extensions: ['webgl_draw_buffers', 'oes_texture_float']
+  extensions: [
+    'webgl_draw_buffers',
+    'oes_texture_float',
+    'angle_instanced_arrays'
+  ]
 })
 const resl = require('resl')
 const glsl = require('glslify')
 const withScene = require('./scene')(regl)
-const { drawBox, boxModel } = require('./draw-box')(regl)
+// const { drawBox, boxModel } = require('./draw-box')(regl)
+const { updateFlock, drawFlock } = require('./flock')(regl)
 const clear = { depth: 1, color: [0, 0, 0, 1] }
 
 const {drawSceneToFramebuffer, drawPostProcessing} = require('./post-process')(regl)
@@ -65,16 +70,14 @@ resl({
         geometryBuffers.resize(viewportWidth, viewportHeight)
 
         withScene(() => {
+          updateFlock();
           drawToGeometryBuffers(() => {
             regl.clear({
               color: [0, 0, 0, 255],
               depth: 1
             })
 
-            for (const box of boxes) {
-              // TODO - This is horrible, as it redraws the screen for each box.
-              drawBox(box)
-            }
+            drawFlock();
           });
 
           withGeometryBuffers(() => {

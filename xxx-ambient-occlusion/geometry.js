@@ -26,13 +26,14 @@ module.exports = function createDeferredRendering (regl) {
 
       varying vec3 vPosition;
       varying vec3 vNormal;
+      varying vec3 vColor;
 
       void main() {
         // Transform everything into view space.
         vec4 position = view * model * vec4(position, 1);
         vNormal = normalView * normal;
         vPosition = position.xyz;
-
+        vColor = vec3(0.8, 0.0, 0.2);
         // The final calculation applies projection as well.
         gl_Position = projection * position;
       }
@@ -41,12 +42,12 @@ module.exports = function createDeferredRendering (regl) {
       #extension GL_EXT_draw_buffers : require
       precision mediump float;
 
+      varying vec3 vColor;
       varying vec3 vNormal;
       varying vec3 vPosition;
 
       void main () {
-        vec3 albedo = vec3(0.8, 0.0, 0.2);
-        gl_FragData[0] = vec4(albedo, 1.0);
+        gl_FragData[0] = vec4(vColor, 1.0);
         gl_FragData[1] = vec4(vNormal, 0.0);
         gl_FragData[2] = vec4(vPosition, 0.0);
       }

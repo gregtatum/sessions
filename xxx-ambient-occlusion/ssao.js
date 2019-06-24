@@ -9,7 +9,7 @@ const lerp = require('lerp')
 module.exports = function createSSAO(regl, config = {}) {
   config = Object.assign({
     noiseWidth: 4,
-    kernelCount: 64,
+    kernelCount: 16,
     radius: 0.4,
     bias: 0.025,
     // The following values are computed based on the kernel size.
