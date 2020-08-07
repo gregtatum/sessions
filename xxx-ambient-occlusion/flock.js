@@ -3,14 +3,13 @@ const mat4 = require('gl-mat4')
 const createBox = require('geo-3d-box')
 const simplex = new (require('simplex-noise'))()
 
-const RADIUS = 128
+const RADIUS = 64
 const COUNT = RADIUS * RADIUS
 const MODEL_SCALE = 0.023
-const RESET_IN_SECONDS = 15
 const ROTATE_SPEED = 0.0
-const BOX_SIZE = 1.5
+const BOX_SIZE = 3.5
 const BOX_RATIO = 0.2
-const PASS_DIVISOR = 32
+const BOX_TAPER = 0.25;
 
 module.exports = function (regl) {
   const box = createBox({size: [
@@ -20,8 +19,8 @@ module.exports = function (regl) {
   ]})
   box.positions.forEach(position => {
     if (position[2] > 0) {
-      position[0] *= 0.5
-      position[1] *= 0.5
+      position[0] *= BOX_TAPER
+      position[1] *= BOX_TAPER
     }
   })
 
@@ -32,10 +31,10 @@ module.exports = function (regl) {
         data: (() => {
           const buffer = new Float32Array(COUNT * 4)
           for (let i = 0; i < COUNT; i++) {
-            buffer[i * 4 + 0] = 12 * (1 + simplex.noise2D(i, 1 * 0.3, pass))
-            buffer[i * 4 + 1] = 12 * (1 + simplex.noise2D(i, 2 * 0.3, pass))
-            buffer[i * 4 + 2] = 22 * (1 + simplex.noise2D(i, 3 * 0.3, pass))
-            buffer[i * 4 + 3] = 12 * (1 + simplex.noise2D(i, 4 * 0.3, pass))
+            buffer[i * 4 + 0] = 0.25 * 12 * (1 + simplex.noise2D(i, 1 * 0.3, pass))
+            buffer[i * 4 + 1] = 0.25 * 12 * (1 + simplex.noise2D(i, 2 * 0.3, pass))
+            buffer[i * 4 + 2] = 0.25 * 22 * (1 + simplex.noise2D(i, 3 * 0.3, pass))
+            buffer[i * 4 + 3] = 0.25 * 12 * (1 + simplex.noise2D(i, 4 * 0.3, pass))
           }
           return buffer
         })(),
@@ -59,24 +58,22 @@ module.exports = function (regl) {
     `,
     frag: glsl`
       precision mediump float;
-      #pragma glslify: snoise3 = require(glsl-noise/simplex/3d)
+      #pragma glslify: noise3d = require(glsl-noise/simplex/3d)
+      #pragma glslify: noise4d = require(glsl-noise/simplex/4d)
       #pragma glslify: range = require(glsl-range)
 
       uniform sampler2D currState, prevState;
-      uniform float time, passStep;
+      uniform float tick, passStep;
       varying vec2 uv;
 
       float TAU = 6.283185307179586;
       float PI = 3.141592653589793;
-      float DAMPING = 0.001;
-      float NOISE_FORCE = 100.0;
-      float NOISE_SCALE = 0.05;
+      float NOISE_DENSITY = 0.02;
       float NOISE_SPEED = 0.1;
-      float BASE_SPEED = 0.1;
-      float STAGE_RADIUS = 10.0;
-      float MAX_STAGE_RADIUS = 28.0;
+      float TURN_SPEED = 0.03;
 
-      float CENTER_FORCE = 0.0;
+      float NOISE_SCALAR = 1.0;
+      float TO_CENTER_SCALAR = 0.003;
 
       void main() {
         vec3 prevPositionA = texture2D(prevState, uv).rgb;
@@ -85,61 +82,35 @@ module.exports = function (regl) {
         vec3 directionA = normalize(deltaPositionA);
         float distanceA = length(deltaPositionA);
 
-        // To origin forces.
-        vec3 center = 10.0 * vec3(
-          0.0,
-          0.0,
-          0.0
-        );
-        vec3 toCenter = 0.5 * (1.1 + sin(time)) * normalize(center - currPositionA);
-        float distanceToCenter = length(currPositionA - center);
-        toCenter *= range(STAGE_RADIUS, MAX_STAGE_RADIUS, min(MAX_STAGE_RADIUS, max(STAGE_RADIUS, distanceToCenter)));
-
-        // Wandering forces.
-        float wanderTheta = TAU * snoise3(vec3(5.0 * uv, time * 0.5));
-        float wanderPhi = PI * 0.5 * snoise3(vec3(5.0 * uv, time * 0.5));
-        vec3 wander = vec3(
-          sin(wanderTheta) * cos(wanderPhi),
-          sin(wanderTheta) * sin(wanderPhi),
-          cos(wanderTheta)
+        float noiseOffset = tick * 0.01 + uv.x;
+        float phi = TAU * noise3d(vec3(
+          NOISE_DENSITY * currPositionA.xy,
+          NOISE_SPEED + noiseOffset
+        ));
+        float theta = TAU * noise3d(vec3(
+          NOISE_DENSITY * currPositionA.xy + 100.0,
+          NOISE_SPEED + noiseOffset
+        ));
+        vec3 noiseDirection = vec3(
+          sin(theta) * cos(phi),
+          sin(theta) * sin(phi),
+          cos(theta)
         );
 
-        vec3 adhesion = vec3(0.0);
-        vec3 alignment = vec3(0.0);
-        vec3 repulsion = vec3(0.0);
+        // Make things want to return to the center of the screen.
+        vec3 origin = vec3(0.0);
+        vec3 toCenter = origin - currPositionA;
+        float toCenterLength = length(toCenter);
+        toCenter /= toCenterLength;
 
-        for (float i = 0.0; i < ${COUNT}.0; i += ${PASS_DIVISOR}.0) {
-          float i2 = i + passStep;
-          vec2 uvB = vec2(
-            mod(i2, ${RADIUS}.0) / ${RADIUS}.0,
-            floor(i2 / ${RADIUS}.0) / ${RADIUS}.0
-          );
-          vec3 prevPositionB = texture2D(prevState, uvB).rgb;
-          vec3 currPositionB = texture2D(currState, uvB).rgb;
-          vec3 deltaPositionB = currPositionB - prevPositionB;
-          vec3 directionB = normalize(deltaPositionB);
-          float distanceB = length(deltaPositionB);
-
-          vec3 deltaBetween = currPositionB - currPositionA;
-          vec3 directionBetween = normalize(deltaBetween);
-          float unitDistance = length(deltaBetween) / (MAX_STAGE_RADIUS * 2.0);
-
-          // Do calculations here:
-          alignment += directionB * pow(unitDistance, 1.5);
-          adhesion += directionBetween * unitDistance;
-          repulsion -= directionBetween * pow(unitDistance, 3.0);
-        }
-
+        // Combine the various directional vectors.
         vec3 direction = mix(directionA, normalize(
-            0.5 * normalize(alignment) +
-            0.8 * normalize(adhesion) +
-            2.0 * normalize(repulsion) +
-            5.0 * toCenter +
-            0.2 * wander
-        ), 0.05);
+          noiseDirection * NOISE_SCALAR +
+          toCenter * TO_CENTER_SCALAR * toCenterLength * toCenterLength
+        ), TURN_SPEED);
 
         // Sum the forces
-        float speed = mix(0.3, 0.4, sin(uv.x * TAU + time));
+        float speed = 0.1;
         vec3 position = currPositionA + speed * direction;
 
         gl_FragColor = vec4(position, 1);
@@ -153,13 +124,7 @@ module.exports = function (regl) {
       currState: ({tick}) => state[(tick + 1) % 3],
       passStep: ({tick}) => tick % 2,
       time: ({time}) => time,
-      reset: ({time}) => {
-        const i = (time / RESET_IN_SECONDS) % 1
-        // Only reset in the last 10% of the time
-        const i2 = Math.max(0, (10 * i - 9))
-        // Quad ease in.
-        return Math.pow(i2, 4)
-      }
+      tick: ({tick}) => tick,
     },
     depth: { enable: false },
     count: 3,
@@ -179,12 +144,15 @@ module.exports = function (regl) {
       uniform float viewportHeight;
       uniform sampler2D currState;
       uniform sampler2D prevState;
+      uniform float time;
 
       varying vec3 vColor;
       varying vec3 vPosition;
       varying vec3 vNormal;
 
       float TAU = 6.283185307179586;
+      float PI = TAU * 0.5;
+      float HALF_PI = TAU * 0.25;
 
       attribute vec3 position;
       attribute vec3 normal;
@@ -223,7 +191,20 @@ module.exports = function (regl) {
         // Compute the base color.
         // TODO:
         // vColor = lighting(rotatedNormal, gl_Position.z);
-        vColor = vec3(1.0);
+        vec3 direction = currPosition.xyz - prevPosition.xyz;
+        float positionHue = (1.0 + cos(2.0 * atan(currPosition.y, currPosition.z)));
+        float directionHue = (1.0 + cos(2.0 * atan(direction.y, direction.z)));
+        float baseHue = time * 0.1;
+
+        vColor = hslToRgb(
+          mod(abs(
+            baseHue +
+            positionHue * 0.05 +
+            directionHue * 0.1
+          ), 1.0),
+          0.4,
+          0.5
+        );
       }
     `,
     // Use the geometry buffer shader for the rest of this.
