@@ -41,7 +41,7 @@
     "imgcat": "2.3.0",
     "jimp": "0.2.27",
     "lerp": "1.0.3",
-    "lodash.template": "4.4.0",
+    "lodash.template": "4.5.0",
     "matcap": "0.0.1",
     "orbit-controls": "1.1.1",
     "perspective-camera": "^2.0.1",
