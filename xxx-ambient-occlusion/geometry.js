@@ -16,7 +16,7 @@ module.exports = function createDeferredRendering (regl) {
   })
   const drawToGeometryBuffers = regl({
     vert: glsl`
-      precision mediump float;
+      precision highp float;
 
       attribute vec3 position;
       attribute vec3 normal;
@@ -40,7 +40,7 @@ module.exports = function createDeferredRendering (regl) {
     `,
     frag: glsl`
       #extension GL_EXT_draw_buffers : require
-      precision mediump float;
+      precision highp float;
 
       varying vec3 vColor;
       varying vec3 vNormal;
@@ -57,7 +57,7 @@ module.exports = function createDeferredRendering (regl) {
 
   const withGeometryBuffers = regl({
     vert: glsl`
-      precision mediump float;
+      precision highp float;
       attribute vec2 position;
       varying vec2 vUv;
       void main() {

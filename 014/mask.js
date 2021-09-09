@@ -16,7 +16,7 @@ module.exports = function (regl) {
 function createDrawMask (regl, quads) {
   return regl({
     vert: glsl`
-      precision mediump float;
+      precision highp float;
       attribute vec3 normal, position;
       uniform mat4 model, view, projection;
       varying vec3 vNormal;
@@ -27,7 +27,7 @@ function createDrawMask (regl, quads) {
       }
     `,
     frag: glsl`
-      precision mediump float;
+      precision highp float;
       #pragma glslify: matcap = require(matcap)
       uniform vec3 cameraPosition;
       uniform sampler2D matcapTexture;

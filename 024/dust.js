@@ -5,7 +5,7 @@ const DUST_COUNT = 2000
 module.exports = function dustDrawer (regl) {
   return regl({
     vert: glsl`
-      precision mediump float;
+      precision highp float;
       #pragma glslify: noise = require('glsl-noise/simplex/2d')
       attribute vec4 position;
       uniform float time, viewportHeight, aspectRatio;
@@ -45,7 +45,7 @@ module.exports = function dustDrawer (regl) {
       }
     `,
     frag: glsl`
-      precision mediump float;
+      precision highp float;
       #pragma glslify: snoise3 = require(glsl-noise/simplex/3d)
       varying vec3 vColor;
       varying float vParticleId;

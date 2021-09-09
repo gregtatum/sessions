@@ -7,7 +7,7 @@ const RADIUS = 4.0
 module.exports = function (regl) {
   return regl({
     vert: glsl`
-      precision mediump float;
+      precision highp float;
       uniform mat4 projection, model, view, normalMatrix;
       uniform float time, pixelRatio, radius, viewportHeight;
       uniform vec3 light1;
@@ -35,7 +35,7 @@ module.exports = function (regl) {
         gl_PointSize = size * flashing * POINT_SIZE * viewportHeight;
       }`,
     frag: `
-      precision mediump float;
+      precision highp float;
       varying vec3 vColor;
       varying float depth;
 

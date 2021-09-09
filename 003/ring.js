@@ -8,7 +8,7 @@ const MAX_RADIUS = 0.4
 module.exports = function (regl) {
   return regl({
     vert: glsl`
-      precision mediump float;
+      precision highp float;
 
       #pragma glslify: hslToRgb = require('glsl-hsl2rgb')
       #pragma glslify: rotate2d = require('glsl-y-rotate')
@@ -36,7 +36,7 @@ module.exports = function (regl) {
         gl_PointSize = POINT_SIZE * viewportHeight;
       }`,
     frag: `
-      precision mediump float;
+      precision highp float;
       varying vec3 vColor;
       varying float depth;
 

@@ -1,7 +1,7 @@
 module.exports = function createDrawPass (regl) {
   return regl({
     vert: `
-      precision mediump float;
+      precision highp float;
       attribute vec2 position;
       varying vec2 vUv;
       void main() {
@@ -10,7 +10,7 @@ module.exports = function createDrawPass (regl) {
       }
     `,
     frag: `
-      precision mediump float;
+      precision highp float;
       varying vec2 vUv;
       uniform sampler2D sourceFBO;
       void main() {

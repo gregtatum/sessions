@@ -17,7 +17,7 @@ module.exports = function (regl) {
     }),
     drawPostProcessing: regl({
       vert: glsl`
-        precision mediump float;
+        precision highp float;
         #pragma glslify: snoise3 = require(glsl-noise/simplex/3d)
         attribute vec2 position;
         varying vec2 vUv;
@@ -39,7 +39,7 @@ module.exports = function (regl) {
         }
       `,
       frag: glsl`
-        precision mediump float;
+        precision highp float;
         #pragma glslify: snoise3 = require(glsl-noise/simplex/3d)
         #pragma glslify: blur5 = require('glsl-fast-gaussian-blur/5')
         #pragma glslify: blur9 = require('glsl-fast-gaussian-blur/9')

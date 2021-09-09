@@ -6,7 +6,7 @@ module.exports = function createInitialTexture(regl, withFullScreenQuad) {
     data: (() => {
       const fill = regl({
         frag: glsl`
-          precision mediump float;
+          precision highp float;
           varying vec2 vUv;
 
           void main () {
@@ -31,7 +31,7 @@ module.exports = function createInitialTexture(regl, withFullScreenQuad) {
 
   const copyTexture = regl({
     frag: glsl`
-      precision mediump float;
+      precision highp float;
       uniform sampler2D texture;
       varying vec2 vUv;
 

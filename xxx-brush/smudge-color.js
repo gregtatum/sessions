@@ -4,7 +4,7 @@ const framebufferFrom = require('./framebuffer-from')
 exports.colorColorFBO = (regl, state) => {
   return framebufferFrom.draw(regl, regl({
     frag: glsl`
-      precision mediump float;
+      precision highp float;
       #pragma glslify: snoise2 = require(glsl-noise/simplex/2d)
       #pragma glslify: hsl2rgb = require(glsl-hsl2rgb)
 
@@ -45,7 +45,7 @@ exports.colorColorFBO = (regl, state) => {
 exports.createUpdateColorBuffer = (regl, state) => {
   return regl({
     frag: glsl`
-      precision mediump float;
+      precision highp float;
 
       uniform float blurDistance, brushSize, mouseSpeed, time, colorMix, pixelsMovedOverToMix;
       uniform vec2 resolution, mouse, mouseDirection;

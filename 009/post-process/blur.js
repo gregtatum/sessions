@@ -25,7 +25,7 @@ module.exports = function (regl, drawPass, {scratchFBO, divisor} = defaultProps)
 
   const drawBlur = regl({
     frag: glsl`
-      precision mediump float;
+      precision highp float;
       #pragma glslify: blur5 = require('glsl-fast-gaussian-blur/5')
       #pragma glslify: blur9 = require('glsl-fast-gaussian-blur/9')
       #pragma glslify: blur13 = require('glsl-fast-gaussian-blur/13')

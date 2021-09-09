@@ -11,7 +11,7 @@ module.exports = function (regl) {
 
   return regl({
     vert: glsl`
-      precision mediump float;
+      precision highp float;
       attribute vec3 position;
       attribute float size, id;
       uniform mat4 view, projection;
@@ -28,7 +28,7 @@ module.exports = function (regl) {
       }
     `,
     frag: glsl`
-      precision mediump float;
+      precision highp float;
       #pragma glslify: snoise3 = require(glsl-noise/simplex/3d)
       varying vec3 vColor;
       varying float vId;

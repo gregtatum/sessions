@@ -28,7 +28,7 @@ module.exports = function (regl, quads) {
 function createDrawLines (regl, quads) {
   return regl({
     vert: glsl`
-      precision mediump float;
+      precision highp float;
       attribute vec3 normal, position;
       uniform mat4 model, view, projection;
       varying vec3 vNormal;
@@ -39,7 +39,7 @@ function createDrawLines (regl, quads) {
       }
     `,
     frag: glsl`
-      precision mediump float;
+      precision highp float;
       varying vec3 vNormal;
 
       void main() {
@@ -68,7 +68,7 @@ function createDrawLines (regl, quads) {
 function createDrawNumbers (regl) {
   return regl({
     vert: glsl`
-      precision mediump float;
+      precision highp float;
       attribute vec3 normal, position;
       attribute vec3 digits;
       uniform mat4 model, view, projection;
@@ -81,7 +81,7 @@ function createDrawNumbers (regl) {
       }
     `,
     frag: glsl`
-      precision mediump float;
+      precision highp float;
       uniform sampler2D numbersTexture;
       uniform vec3 color;
       varying vec3 vDigits;

@@ -14,7 +14,11 @@ resl({
     matcapTexture: {
       type: 'image',
       src: '/common/textures/matcap/Jade_Light.png',
-      parser: (data) => regl.texture({ data })
+      parser: (data) => regl.texture({
+        data,
+        mag: "linear",
+        min: "linear",
+      })
     }
   },
   onDone: (assets) => {

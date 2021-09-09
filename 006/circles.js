@@ -86,7 +86,7 @@ module.exports = function (regl) {
 
   const drawArc = regl({
     vert: glsl`
-      precision mediump float;
+      precision highp float;
       attribute vec3 normal, position;
       uniform mat4 model, view, projection;
       varying vec3 vColor;
@@ -97,7 +97,7 @@ module.exports = function (regl) {
       }
     `,
     frag: glsl`
-      precision mediump float;
+      precision highp float;
       varying vec3 vColor;
 
       void main() {

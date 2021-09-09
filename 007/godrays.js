@@ -1,7 +1,7 @@
 module.exports = function createDraw (regl) {
   return regl({
     vert: `
-      precision mediump float;
+      precision highp float;
       attribute vec2 position;
       varying vec2 uv;
       void main () {
@@ -10,7 +10,7 @@ module.exports = function createDraw (regl) {
       }
     `,
     frag: `
-      precision mediump float;
+      precision highp float;
       uniform float time, ratio;
       varying vec2 uv;
 

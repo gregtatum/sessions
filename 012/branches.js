@@ -13,7 +13,7 @@ module.exports = function (regl) {
       #pragma glslify: hsl2rgb = require(glsl-hsl2rgb)
       #pragma glslify: rotateY = require(../common/glsl/rotateY)
 
-      precision mediump float;
+      precision highp float;
       attribute vec3 normal, position;
       attribute float branch, depth;
       uniform mat4 inverseView, view, projection;
@@ -39,7 +39,7 @@ module.exports = function (regl) {
       }
     `,
     frag: glsl`
-      precision mediump float;
+      precision highp float;
       varying vec3 vColor;
 
       void main() {

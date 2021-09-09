@@ -21,7 +21,7 @@ module.exports = function (regl) {
     vert: glsl`
       #pragma glslify: snoise3 = require(glsl-noise/simplex/3d)
       #pragma glslify: snoise2 = require(glsl-noise/simplex/2d)
-      precision mediump float;
+      precision highp float;
       uniform mat4 projection, model, view;
       uniform float time;
       attribute vec3 position;
@@ -74,7 +74,7 @@ module.exports = function (regl) {
       }
     `,
     frag: glsl`
-      precision mediump float;
+      precision highp float;
       #pragma glslify: toGamma = require('glsl-gamma/out')
       #pragma glslify: rotateX = require(glsl-y-rotate/rotateX)
       #pragma glslify: rotateY = require(glsl-y-rotate/rotateY)

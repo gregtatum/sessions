@@ -10,7 +10,7 @@ module.exports = function (regl) {
       #pragma glslify: rotate2d = require(glsl-y-rotate)
       #pragma glslify: toGamma = require('glsl-gamma/out')
       #pragma glslify: hslToRgb = require('glsl-hsl2rgb')
-      precision mediump float;
+      precision highp float;
       uniform mat4 projection, model, view, normalMatrix;
       uniform float time, pixelRatio, radius, viewportHeight;
       uniform vec3 light1;
@@ -42,7 +42,7 @@ module.exports = function (regl) {
         gl_PointSize = max(0.0, pointSizeByHeight * POINT_SIZE * viewportHeight * (2.0 - gl_Position.z));
       }`,
     frag: `
-      precision mediump float;
+      precision highp float;
       varying vec3 vColor;
       varying float depth;
 

@@ -65,7 +65,7 @@ module.exports = function (regl, initialCenter) {
       }
     `,
     frag: glsl`
-      precision mediump float;
+      precision highp float;
       #pragma glslify: snoise3 = require(glsl-noise/simplex/3d)
       #pragma glslify: range = require(glsl-range)
 

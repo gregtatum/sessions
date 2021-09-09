@@ -3,7 +3,7 @@ const glsl = require('glslify')
 module.exports = function createDrawBloom (regl, drawPass) {
   const drawBloom = regl({
     frag: glsl`
-      precision mediump float;
+      precision highp float;
       #pragma glslify: toGamma = require('glsl-gamma/out')
       #pragma glslify: blur13 = require('glsl-fast-gaussian-blur/13')
       #pragma glslify: noise3d = require(glsl-noise/simplex/3d)

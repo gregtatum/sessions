@@ -3,7 +3,7 @@ const glsl = require('glslify')
 module.exports = function (regl) {
   return regl({
     vert: glsl`
-      precision mediump float;
+      precision highp float;
       attribute vec2 position;
       uniform mat4 inverseProjection, inverseView;
       varying vec3 vDirection;
@@ -14,7 +14,7 @@ module.exports = function (regl) {
       }
     `,
     frag: glsl`
-      precision mediump float;
+      precision highp float;
       #pragma glslify: computeBackground = require(./background)
 
       uniform float time;

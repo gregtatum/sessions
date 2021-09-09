@@ -61,7 +61,7 @@ function createDraw (regl, buffers) {
   return regl({
     /*
     vert: glsl`
-      precision mediump float;
+      precision highp float;
       attribute vec3 position, normal;
       uniform mat4 view, projection;
       varying vec3 vColor;
@@ -79,7 +79,7 @@ function createDraw (regl, buffers) {
       }
     `,
     frag: glsl`
-      precision mediump float;
+      precision highp float;
       varying vec3 vColor;
 
       void main() {
@@ -87,7 +87,7 @@ function createDraw (regl, buffers) {
       }
     `, */
     vert: glsl`
-      precision mediump float;
+      precision highp float;
       #pragma glslify: rotateX = require(../common/glsl/rotateX)
 
       attribute vec3 position, normal;
@@ -122,7 +122,7 @@ function createDraw (regl, buffers) {
       }
     `,
     frag: glsl`
-      precision mediump float;
+      precision highp float;
       #pragma glslify: computeBackground = require(./background)
 
       varying vec3 vPosition, vReflect, vColor;

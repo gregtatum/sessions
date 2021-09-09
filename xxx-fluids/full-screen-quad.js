@@ -3,7 +3,7 @@ const glsl = require('glslify')
 module.exports = function(regl) {
   return regl({
     vert: glsl`
-      precision mediump float;
+      precision highp float;
       attribute vec2 position;
       varying vec2 vUv;
       void main () {

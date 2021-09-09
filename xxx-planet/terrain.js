@@ -26,7 +26,7 @@ module.exports = function (regl) {
 
   return regl({
     vert: glsl`
-      precision mediump float;
+      precision highp float;
       attribute vec3 normal, position;
       attribute vec2 uv;
       uniform mat4 model, projView;
@@ -37,7 +37,7 @@ module.exports = function (regl) {
       }
     `,
     frag: glsl`
-      precision mediump float;
+      precision highp float;
       #pragma glslify: hsl2rgb = require(glsl-hsl2rgb)
       varying vec3 vPosition;
 

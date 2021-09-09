@@ -48,7 +48,7 @@ module.exports = function (regl) {
 
   const updateFlock = regl({
     vert: glsl`
-      precision mediump float;
+      precision highp float;
       attribute vec2 position;
       varying vec2 uv;
       void main() {
@@ -57,7 +57,7 @@ module.exports = function (regl) {
       }
     `,
     frag: glsl`
-      precision mediump float;
+      precision highp float;
       #pragma glslify: noise3d = require(glsl-noise/simplex/3d)
       #pragma glslify: noise4d = require(glsl-noise/simplex/4d)
       #pragma glslify: range = require(glsl-range)
@@ -133,7 +133,7 @@ module.exports = function (regl) {
 
   const drawFlock = regl({
     vert: glsl`
-      precision mediump float;
+      precision highp float;
       #pragma glslify: rotate2d = require(glsl-y-rotate/rotateY)
       #pragma glslify: hslToRgb = require('glsl-hsl2rgb')
       #pragma glslify: lookAt = require('glsl-look-at')

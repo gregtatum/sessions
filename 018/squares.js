@@ -12,7 +12,7 @@ module.exports = function (regl) {
   return regl({
     vert: glsl`
       #pragma glslify: snoise4 = require(glsl-noise/simplex/4d)
-      precision mediump float;
+      precision highp float;
       attribute float occluded;
       attribute vec3 normal, position, center;
       uniform float time;
@@ -41,7 +41,7 @@ module.exports = function (regl) {
       }
     `,
     frag: glsl`
-      precision mediump float;
+      precision highp float;
       #pragma glslify: cookTorranceSpec = require(glsl-specular-cook-torrance)
       #pragma glslify: hsl2rgb = require(glsl-hsl2rgb)
       uniform vec3 cameraPosition;

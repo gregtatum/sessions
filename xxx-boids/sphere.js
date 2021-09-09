@@ -9,7 +9,7 @@ module.exports = function createDrawSphere (regl) {
   return regl({
     vert: glsl`
       #pragma glslify: hsl2rgb = require(glsl-hsl2rgb)
-      precision mediump float;
+      precision highp float;
       attribute vec3 normal, position;
       uniform mat4 model, view, projection;
       uniform float time;
@@ -23,7 +23,7 @@ module.exports = function createDrawSphere (regl) {
       }
     `,
     frag: glsl`
-      precision mediump float;
+      precision highp float;
       #pragma glslify: snoise4 = require(glsl-noise/simplex/4d)
       #pragma glslify: rotateX = require(glsl-y-rotate/rotateX)
       #pragma glslify: rotateY = require(glsl-y-rotate/rotateY)

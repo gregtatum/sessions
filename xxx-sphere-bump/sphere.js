@@ -18,7 +18,7 @@ module.exports = function (regl, texture) {
 
   return regl({
     vert: glsl`
-      precision mediump float;
+      precision highp float;
       attribute vec3 normal, binormal, tangent, position;
       uniform mat4 model, projView;
       uniform mat3 viewNormal;
@@ -81,7 +81,7 @@ module.exports = function (regl, texture) {
       }
     `,
     frag: glsl`
-      precision mediump float;
+      precision highp float;
       uniform vec3 light0, light1, light2;
       uniform vec3 lightColor0, lightColor1, lightColor2;
       uniform float neighborX, neighborY, viewportWidth, viewportHeight, time;

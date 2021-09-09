@@ -43,6 +43,7 @@ module.exports = function (regl) {
     },
     vert: glsl`
       #pragma glslify: snoise2 = require(glsl-noise/simplex/2d)
+      precision highp float;
       attribute vec3 position;
       attribute vec3 normal;
       uniform mat4 model, view, projection;
@@ -72,7 +73,7 @@ module.exports = function (regl) {
       }
     `,
     frag: glsl`
-      precision mediump float;
+      precision highp float;
       varying vec3 vNormal;
       void main () {
         float brightness = dot(vNormal, vec3(0.0, 1.0, 0.0));

@@ -1,7 +1,7 @@
 module.exports = function createDrawBloom (regl, drawPass) {
   const drawBloom = regl({
     frag: `
-      precision mediump float;
+      precision highp float;
       varying vec2 vUv;
       uniform sampler2D sourceFBO;
       uniform sampler2D blurFBO;

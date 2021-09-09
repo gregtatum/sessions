@@ -6,7 +6,7 @@ module.exports = function (regl) {
 
   return regl({
     vert: glsl`
-      precision mediump float;
+      precision highp float;
       attribute vec3 position;
       uniform mat4 projection, viewRotation;
       varying vec3 vPosition;
@@ -18,7 +18,7 @@ module.exports = function (regl) {
       }
     `,
     frag: glsl`
-      precision mediump float;
+      precision highp float;
       #pragma glslify: computeBackground = require(./background)
 
       varying vec3 vPosition;

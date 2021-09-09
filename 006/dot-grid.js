@@ -9,7 +9,7 @@ const POINTS = Math.pow(GRID_SIDE, 3)
 module.exports = function (regl) {
   return regl({
     vert: glsl`
-      precision mediump float;
+      precision highp float;
       uniform mat4 projection, model, view;
       uniform float time, pixelRatio, viewportHeight;
       uniform vec3 light1;
@@ -29,7 +29,7 @@ module.exports = function (regl) {
         gl_PointSize = POINT_SIZE * viewportHeight;
       }`,
     frag: `
-      precision mediump float;
+      precision highp float;
       varying vec3 vColor;
       varying float depth;
 

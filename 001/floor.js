@@ -13,7 +13,7 @@ module.exports = function (regl) {
 
   return regl({
     frag: `
-      precision mediump float;
+      precision highp float;
       varying vec3 vNormal;
       varying vec2 vUv;
       void main () {
@@ -24,7 +24,7 @@ module.exports = function (regl) {
       }`,
     vert: glsl`
       #pragma glslify: snoise3 = require(glsl-noise/simplex/3d)
-      precision mediump float;
+      precision highp float;
       uniform mat4 proj;
       uniform mat4 model;
       uniform mat4 view;

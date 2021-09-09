@@ -84,7 +84,7 @@ function updateSphereTree (node, time, branch = 0, parentCenter, parentScale) {
 function createSphereShader (regl) {
   return regl({
     vert: glsl`
-      precision mediump float;
+      precision highp float;
       #pragma glslify: rotateX = require(../common/glsl/rotateX)
 
       attribute vec3 position, normal;
@@ -121,7 +121,7 @@ function createSphereShader (regl) {
       }
     `,
     frag: glsl`
-      precision mediump float;
+      precision highp float;
       #pragma glslify: computeBackground = require(./background)
 
       varying vec3 vPosition, vReflect, vColor;

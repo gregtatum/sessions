@@ -3,7 +3,7 @@ const glsl = require('glslify')
 module.exports = function (regl) {
   return regl({
     vert: glsl`
-      precision mediump float;
+      precision highp float;
       attribute vec2 position;
       uniform mat4 inverseProjection, inverseView;
       varying vec3 vDirection;
@@ -16,7 +16,7 @@ module.exports = function (regl) {
       }
     `,
     frag: glsl`
-      precision mediump float;
+      precision highp float;
       #pragma glslify: snoise2 = require(glsl-noise/simplex/2d)
       #pragma glslify: snoise3 = require(glsl-noise/simplex/3d)
       #pragma glslify: hsl2rgb = require(glsl-hsl2rgb)

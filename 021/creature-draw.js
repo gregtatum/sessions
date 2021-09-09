@@ -12,7 +12,7 @@ module.exports = function (regl, mesh) {
 
   return regl({
     vert: glsl`
-      precision mediump float;
+      precision highp float;
       attribute vec3 normal, position;
       uniform mat4 model, view, projection;
       uniform mat3 normalModel, normalView;
@@ -48,7 +48,7 @@ module.exports = function (regl, mesh) {
       }
     `,
     frag: glsl`
-      precision mediump float;
+      precision highp float;
       #pragma glslify: matcap = require(matcap)
       uniform vec3 cameraPosition;
       uniform sampler2D matcapTexture;

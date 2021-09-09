@@ -32,7 +32,7 @@ exports.createVelocityFBO = (regl) => {
 exports.createUpdateVelocityBuffer = (regl, state) => {
   return regl({
     frag: glsl`
-      precision mediump float;
+      precision highp float;
 
       uniform float
         brushSize,

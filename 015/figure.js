@@ -16,7 +16,7 @@ function createDrawMaskBody (regl, mesh) {
   const arr2 = []
   return regl({
     vert: glsl`
-      precision mediump float;
+      precision highp float;
       attribute vec3 normal, position;
       uniform mat4 model, headModel, view, projection;
       uniform mat3 normalView, normalModel, normalHeadModel;
@@ -43,7 +43,7 @@ function createDrawMaskBody (regl, mesh) {
       }
     `,
     frag: glsl`
-      precision mediump float;
+      precision highp float;
       varying vec3 vNormal, vPosition;
       varying float vDepth;
 

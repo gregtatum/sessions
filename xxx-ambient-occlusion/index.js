@@ -25,7 +25,7 @@ const {
 
 const drawLight = regl({
   frag: glsl`
-    precision mediump float;
+    precision highp float;
     varying vec2 vUv;
     uniform sampler2D albedoTexture, normalTexture, positionTexture, ssaoFBO;
 

@@ -9,7 +9,7 @@ module.exports = function(regl) {
 
   return regl({
     vert: glsl`
-      precision mediump float;
+      precision highp float;
       uniform mat4 model, view, projection;
       attribute vec2 position, center;
       varying vec2 vCenter;
@@ -52,7 +52,7 @@ module.exports = function(regl) {
       }
     `,
     frag: glsl`
-      precision mediump float;
+      precision highp float;
       varying vec2 vCenter;
       uniform float time;
       #pragma glslify: snoise2 = require(glsl-noise/simplex/2d)

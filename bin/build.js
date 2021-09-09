@@ -56,12 +56,10 @@ function browserifyBundle (callback) {
       throw err
     }
     console.log('Compressing bundle', bundlePath)
-    console.log({ src })
     const result = UglifyJS.minify(src.toString())
     if (result.error) {
       throw result.error
     }
-    console.log({ result })
 
     console.log('Writing bundle', bundlePath)
     fs.writeFileSync(bundlePath, result.code)

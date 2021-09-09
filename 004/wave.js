@@ -35,7 +35,7 @@ module.exports = function (regl) {
 
   const updatePositions = regl({
     vert: `
-      precision mediump float;
+      precision highp float;
       attribute vec2 position;
       varying vec2 uv;
       void main() {
@@ -44,7 +44,7 @@ module.exports = function (regl) {
       }
     `,
     frag: `
-      precision mediump float;
+      precision highp float;
       uniform sampler2D prevState;
       uniform sampler2D currState;
       uniform float force;
@@ -96,7 +96,7 @@ module.exports = function (regl) {
 
   const drawWave = regl({
     vert: glsl`
-      precision mediump float;
+      precision highp float;
       #pragma glslify: hslToRgb = require('glsl-hsl2rgb')
       uniform mat4 projection, model, view;
       uniform float viewportHeight;
@@ -122,7 +122,7 @@ module.exports = function (regl) {
       }
     `,
     frag: `
-      precision mediump float;
+      precision highp float;
       varying vec3 vColor;
 
       void main () {

@@ -3,7 +3,7 @@ const glsl = require('glslify')
 module.exports = function createDrawReactionDiffusion (regl, texture) {
   return regl({
     frag: glsl`
-      precision mediump float;
+      precision highp float;
       uniform sampler2D texture;
       varying vec2 vUv;
 

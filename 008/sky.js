@@ -21,7 +21,7 @@ module.exports = function (regl) {
       height: regl.context('viewportHeight')
     },
     vert: glsl`
-      precision mediump float;
+      precision highp float;
       attribute vec3 position;
       uniform mat4 modelViewMatrix;
       uniform mat4 projectionMatrix;
@@ -33,7 +33,7 @@ module.exports = function (regl) {
       }
     `,
     frag: glsl`
-      precision mediump float;
+      precision highp float;
       #pragma glslify: hsl2rgb = require(glsl-hsl2rgb)
       #pragma glslify: snoise3 = require(glsl-noise/simplex/3d)
       #pragma glslify: snoise2 = require(glsl-noise/simplex/2d)

@@ -50,7 +50,7 @@ module.exports = function createSSAO(regl, config = {}) {
 
   const drawSSAONoisy = regl({
     frag: glsl`
-      precision mediump float;
+      precision highp float;
       uniform sampler2D albedoTexture, normalTexture, worldPositionTexture,
                         positionTexture, noiseTexture, kernelTexture;
       uniform vec2 noiseScale;
@@ -128,7 +128,7 @@ module.exports = function createSSAO(regl, config = {}) {
   const drawSSAOBlur = regl({
     // Trivially pass through the triangle to the frag shader.
     vert: glsl`
-      precision mediump float;
+      precision highp float;
       attribute vec2 position;
       varying vec2 vUv;
       void main() {
@@ -136,7 +136,7 @@ module.exports = function createSSAO(regl, config = {}) {
         gl_Position = vec4(position, 0, 1);
     }`,
     frag: glsl`
-      precision mediump float;
+      precision highp float;
       uniform sampler2D noisySsaoFBO;
       uniform float noiseArea;
       uniform vec2 texelSize;

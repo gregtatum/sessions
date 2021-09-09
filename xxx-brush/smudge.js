@@ -76,7 +76,7 @@ function setupEventHandlers (state) {
 function createDrawToScreen (regl, state) {
   return regl({
     frag: glsl`
-      precision mediump float;
+      precision highp float;
 
       varying vec2 vUv;
       uniform sampler2D fbo;

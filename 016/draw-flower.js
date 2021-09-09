@@ -10,7 +10,7 @@ module.exports = function createDrawFlower (regl, mesh) {
 
   return regl({
     vert: glsl`
-      precision mediump float;
+      precision highp float;
       attribute vec3 normal, position;
       uniform mat4 model, morph, view, projection, projView;
       uniform mat3 normalModel, normalMorph, normalView;
@@ -39,7 +39,7 @@ module.exports = function createDrawFlower (regl, mesh) {
       }
     `,
     frag: glsl`
-      precision mediump float;
+      precision highp float;
       #pragma glslify: matcap = require(matcap)
       #pragma glslify: hueShift = require(../common/glsl/hue-shift)
       #pragma glslify: rgb2hsl = require(../common/glsl/rgb2hsl)

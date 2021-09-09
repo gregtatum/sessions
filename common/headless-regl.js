@@ -1,11 +1,12 @@
-const headlessContext = require('gl')
-
 const MAX_DRAW_CALLS = 1
 const WIDTH = 1280
 const HEIGHT = 720
 const NOOP = () => {}
 
 module.exports = function headlessRegl (config) {
+  // This probably won't work anymore. You will have to install "gl" to even try.
+  const headlessContext = require('gl')
+
   const gl = headlessContext(WIDTH, HEIGHT)
   const argv = require('minimist')(process.argv.slice(2))
   const timeout = argv.timeout || MAX_DRAW_CALLS

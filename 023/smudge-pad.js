@@ -47,7 +47,7 @@ module.exports = function createSmudePage (regl) {
 
   const drawFBO = regl({
     frag: glsl`
-      precision mediump float;
+      precision highp float;
 
       varying vec2 vUv;
       uniform sampler2D fbo;
@@ -65,7 +65,7 @@ module.exports = function createSmudePage (regl) {
 
   const updateFBO = regl({
     frag: glsl`
-      precision mediump float;
+      precision highp float;
 
       uniform float blurDistance, brushSize, mouseSpeed, time, colorMix, pixelsMovedOverToMix;
       uniform vec2 resolution, mouse, prevMouse, mouseDirection;
@@ -166,7 +166,7 @@ module.exports = function createSmudePage (regl) {
 function makeFBO(regl) {
   return framebufferFrom.draw(regl, regl({
     frag: glsl`
-      precision mediump float;
+      precision highp float;
       #pragma glslify: snoise2 = require(glsl-noise/simplex/2d)
       #pragma glslify: hsl2rgb = require(glsl-hsl2rgb)
 

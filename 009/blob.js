@@ -16,7 +16,7 @@ module.exports = function (regl) {
 
   const drawOrb = regl({
     vert: glsl`
-      precision mediump float;
+      precision highp float;
       #pragma glslify: snoise4 = require(glsl-noise/simplex/4d)
       #pragma glslify: rotateY = require(glsl-y-rotate/rotateY)
       attribute vec3 position, normal, binormal, tangent;
@@ -52,7 +52,7 @@ module.exports = function (regl) {
       }
     `,
     frag: glsl`
-      precision mediump float;
+      precision highp float;
       #pragma glslify: snoise4 = require(glsl-noise/simplex/4d)
       #pragma glslify: rotate = require(glsl-y-rotate)
       uniform sampler2D envmap;
